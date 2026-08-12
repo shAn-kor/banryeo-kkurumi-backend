@@ -9,6 +9,10 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        type:
+          preferred_uuid_jdbc_type: CHAR
   data:
     redis:
       host: ${REDIS_HOST:localhost}
