@@ -1,0 +1,83 @@
+spring:
+  application:
+    name: banryeo-kkurumi-backend
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  session:
+    timeout: 30m
+    redis:
+      namespace: banryeo:session
+  modulith:
+    events:
+      jdbc:
+        schema-initialization:
+          enabled: true
+      republish-outstanding-events-on-restart: true
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: ${SESSION_COOKIE_SECURE:false}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,modulith
+  endpoint:
+    health:
+      probes:
+        enabled: true
+app:
+  admin:
+    login-id: ${ADMIN_LOGIN_ID:}
+    password: ${ADMIN_PASSWORD:}
+  pii:
+    encryption-key: ${PII_ENCRYPTION_KEY:}
+  payment:
+    reconciliation-delay: 10s
+    reconciliation-window: 10m
+  shipping:
+    ship-delay: 1m
+    delivery-delay: 2m
+resilience4j:
+  circuitbreaker:
+    instances:
+      paymentProvider:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 2
+  timelimiter:
+    instances:
+      paymentProvider:
+        timeout-duration: 2s
+        cancel-running-future: true
+  retry:
+    instances:
+      paymentProvider:
+        max-attempts: 2
+        wait-duration: 200ms
+
+---
+spring:
+  config:
+    activate:
+      on-profile: public
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
