@@ -24,6 +24,8 @@ jobs:
       - run: ./gradlew test
       - run: ./scripts/check-api-contract.sh
       - run: ./scripts/check-public-hygiene.sh
+      - run: bash -n performance/*.sh
+      - run: docker compose -f performance/compose.yml config --quiet
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

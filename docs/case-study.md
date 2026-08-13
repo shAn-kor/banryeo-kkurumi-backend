@@ -66,3 +66,21 @@
 - 주문 모듈과 루트 암호화 seam 사이의 실제 순환 의존 1건
 
 앞의 두 검사는 프로젝트 타입으로 범위를 좁히고 실제 도메인 타입을 지정하도록 교정했습니다. 암호화 seam은 개인정보 snapshot을 소유하는 주문 모듈 안으로 이동했습니다. `ApplicationModules.verify()`와 ArchUnit이 순환 의존, 내부 접근, Controller의 repository 직접 접근을 계속 차단합니다.
+
+## 동시에 재고를 예약하면 판매 수량을 넘길 수 있는 문제
+
+### 비교한 대안
+
+| 대안 | 판단 |
+|---|---|
+| 조회 후 애플리케이션에서 수량 차감 | 두 transaction이 같은 가용 수량을 읽을 수 있어 제외 |
+| JVM lock | 단일 process 밖에서는 재고를 보호하지 못해 제외 |
+| 조건부 원자 UPDATE | DB가 `available_quantity >= quantity` 조건과 차감을 한 문장으로 처리하므로 선택 |
+
+`UPDATE inventory_stock SET available_quantity=available_quantity-:quantity, reserved_quantity=reserved_quantity+:quantity WHERE sku_id=:skuId AND available_quantity>=:quantity`의 영향 행이 1건일 때만 reservation을 생성합니다. 재고 50개에 서로 다른 주문 100개를 동시에 시작하는 테스트를 10회 반복했습니다.
+
+- 총 예약 시도: **1,000건**
+- 성공: 회차마다 **50건**
+- 재고 부족: 회차마다 **50건**
+- 초과 예약과 음수 재고: **0건**
+- 성공 예약을 모두 해제한 뒤 잔여 예약 재고: **0건**

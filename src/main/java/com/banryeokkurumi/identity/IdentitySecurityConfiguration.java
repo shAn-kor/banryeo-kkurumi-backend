@@ -38,7 +38,8 @@ class IdentitySecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health/**", "/api/v1/auth/register", "/api/v1/auth/login",
                                 "/api/v1/auth/csrf", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/products/**", "/api/v1/search/**",
+                        .requestMatchers(HttpMethod.GET, "/api/v1/products", "/api/v1/products/**",
+                                "/api/v1/search", "/api/v1/search/**", "/api/v1/recommendations",
                                 "/api/v1/recommendations/**").permitAll()
                         .requestMatchers("/api-admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())

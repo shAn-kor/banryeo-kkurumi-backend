@@ -22,7 +22,7 @@
 
 ## 구현 범위
 
-- Java 25, Spring Boot 4.0, Spring Modulith 2.0, Gradle Kotlin DSL
+- Java 25 + Kotlin 2.3.21(`payment`), Spring Boot 4.0, Spring Modulith 2.0, Gradle Kotlin DSL
 - MySQL 8.4: 트랜잭션 정본, 검색 문서, 이벤트 publication
 - Redis 7.4: 세션, 장바구니 캐시, 추천 가속 계층
 - Spring Security session cookie + CSRF, BCrypt
@@ -57,6 +57,8 @@ npm run docs:build
 
 통합 테스트에는 Docker가 필요합니다. 모듈 구조 테스트는 순환 의존, 허용하지 않은 모듈 접근, Controller의 repository 직접 접근을 실패 처리합니다. 고정 데이터셋 성능 측정은 [검증 문서](docs/verification.md)에 조건과 한계를 함께 기록합니다.
 
+재고 50개에 100개 요청을 동시에 보내는 검증을 10회 반복해 총 1,000개 예약 시도에서 초과 예약과 음수 재고가 없음을 확인했습니다. 30만 검색 문서의 실행 계획과 k6 결과는 [성능 측정](docs/performance.md)에 조건과 함께 공개합니다.
+
 ## 문서
 
 - [문제 해결 사례](docs/case-study.md)
@@ -64,5 +66,6 @@ npm run docs:build
 - [주문 상태수렴](docs/order-convergence.md)
 - [API 표면](docs/api.md)
 - [검증 기준](docs/verification.md)
+- [성능 측정](docs/performance.md)
 
 별도 프론트엔드 저장소는 공개 준비가 끝난 뒤 링크로만 연결합니다. 이 저장소에는 프론트엔드 소스를 포함하지 않습니다.

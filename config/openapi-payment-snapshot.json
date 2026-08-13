@@ -1,0 +1,17 @@
+{
+  "path": "/api/v1/orders/{orderId}/payment",
+  "method": "get",
+  "schema": "PaymentView",
+  "fields": {
+    "amount": "integer:int64",
+    "failureReason": "string:",
+    "memberLoginId": "string:",
+    "nextReconciliationAt": "string:date-time",
+    "orderId": "string:uuid",
+    "providerTransactionId": "string:",
+    "reconciliationDeadline": "string:date-time",
+    "scenario": "string:",
+    "status": "string:",
+    "updatedAt": "string:date-time"
+  }
+}

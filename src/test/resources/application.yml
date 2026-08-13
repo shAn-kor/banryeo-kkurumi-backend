@@ -1,0 +1,10 @@
+spring:
+  modulith:
+    events:
+      jdbc:
+        schema-initialization:
+          enabled: true
+      republish-outstanding-events-on-restart: false
+app:
+  scheduling:
+    enabled: false

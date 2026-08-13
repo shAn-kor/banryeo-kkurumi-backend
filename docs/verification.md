@@ -6,6 +6,7 @@
 - ArchUnit 및 Spring Modulith 구조 검증
 - Testcontainers MySQL 8.4·Redis 7.4 context/migration 검증
 - 공개 API allowlist, 공개 위생 검사
+- Kotlin 전환 전후 결제 OpenAPI field snapshot 검사
 - VitePress 정적 문서 build
 - GitHub secret scan과 dependency review
 
@@ -20,3 +21,5 @@
 `performance/`의 k6 시나리오는 고정된 30만 상품 dataset을 별도로 적재한 환경에서만 실행합니다. 결과를 기록할 때 CPU, 메모리, Docker 버전, JVM 옵션, warm-up, 동시 사용자, 실행 시간을 함께 남깁니다. 이 수치는 운영 SLA나 실제 트래픽 성능을 의미하지 않습니다.
 
 검색은 MySQL `EXPLAIN ANALYZE` 실행 계획과 cursor 중복·누락 여부를 함께 확인합니다. MySQL이 측정 기준을 충족하지 못할 때에만 `ProductSearch` 경계 뒤의 외부 검색 adapter를 후속 검토합니다.
+
+재고 경합은 재고 50개에 서로 다른 주문 100개를 동시에 예약하고 이를 10회 반복합니다. 각 회차마다 성공 50건·실패 50건, 음수 재고 0건, 해제 후 가용 재고 50개 복원을 자동 검사합니다.

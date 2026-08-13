@@ -8,7 +8,11 @@ else
   tracked="$(find . -type f -not -path './.git/*')"
 fi
 tracked="$(printf '%s\n' "$tracked" | grep -Ev '^(\./)?scripts/check-public-hygiene\.sh$')"
-if printf '%s\n' "$tracked" | xargs -r grep -Eni "$blocked"; then
+matches="$(printf '%s\n' "$tracked" | while IFS= read -r file; do
+  if [[ -f "$file" ]]; then grep -Eni "$blocked" "$file" || true; fi
+done)"
+if [[ -n "$matches" ]]; then
+  printf '%s\n' "$matches"
   echo "공개 금지 문자열을 발견했습니다." >&2
   exit 1
 fi

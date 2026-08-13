@@ -11,6 +11,7 @@ export default defineConfig({
       { text: '모듈', link: '/modules' },
       { text: '주문 흐름', link: '/order-convergence' },
       { text: 'API', link: '/api' },
+      { text: '성능', link: '/performance' },
       { text: '검증', link: '/verification' }
     ],
     sidebar: [
@@ -19,6 +20,7 @@ export default defineConfig({
       { text: '모듈 지도', link: '/modules' },
       { text: '주문 상태수렴', link: '/order-convergence' },
       { text: 'API 표면', link: '/api' },
+      { text: '성능 측정', link: '/performance' },
       { text: '검증 기준', link: '/verification' }
     ]
   }

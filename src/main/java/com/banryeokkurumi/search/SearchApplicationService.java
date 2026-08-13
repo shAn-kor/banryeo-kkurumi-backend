@@ -89,7 +89,7 @@ public class SearchApplicationService {
         static SortSql forSort(SearchSort sort) {
             return switch (sort) {
                 case RELEVANCE -> descending("IF(:keyword = '', 0, MATCH(search_text) AGAINST (:keyword IN BOOLEAN MODE))");
-                case LATEST -> descending("UNIX_TIMESTAMP(cataloged_at)");
+                case LATEST -> descending("cataloged_epoch");
                 case PRICE_ASC -> new SortSql("price", "ASC", "price > :afterValue OR (price = :afterValue AND product_id > :afterId)");
                 case PRICE_DESC -> descending("price");
                 case POPULAR -> descending("popularity_score");

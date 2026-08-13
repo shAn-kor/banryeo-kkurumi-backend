@@ -11,8 +11,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -25,11 +25,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(properties = {
         "app.payment.reconciliation-delay=1s",
         "app.payment.reconciliation-window=5s",
+        "app.scheduling.enabled=true",
         "resilience4j.timelimiter.instances.paymentProvider.timeout-duration=100ms",
         "app.shipping.ship-delay=1h",
         "app.shipping.delivery-delay=2h"
 })
-@Testcontainers(disabledWithoutDocker = true)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class OrderConvergenceIntegrationTest {
     private static final String MEMBER = "convergence-member";
 

@@ -13,14 +13,15 @@ class SearchProjectionHandler {
     @ApplicationModuleListener
     void on(CommerceEvents.ProductCataloged event) {
         jdbc.sql("""
-                INSERT INTO search_document(product_id, sku_id, product_name, brand_name, category_name, option_name, search_text, cataloged_at)
-                VALUES (:productId, :skuId, :name, :brand, :category, :option, :searchText, :catalogedAt)
+                INSERT INTO search_document(product_id, sku_id, product_name, brand_name, category_name, option_name, search_text, cataloged_at, cataloged_epoch)
+                VALUES (:productId, :skuId, :name, :brand, :category, :option, :searchText, :catalogedAt, :catalogedEpoch)
                 ON DUPLICATE KEY UPDATE product_name=:name, brand_name=:brand, category_name=:category,
                     option_name=:option, search_text=:searchText
                 """).param("productId", event.productId().toString()).param("skuId", event.skuId().toString())
                 .param("name", event.name()).param("brand", event.brandName()).param("category", event.categoryName())
                 .param("option", event.optionName()).param("searchText", String.join(" ", event.name(), event.brandName(), event.categoryName()))
                 .param("catalogedAt", event.occurredAt())
+                .param("catalogedEpoch", event.occurredAt().getEpochSecond())
                 .update();
     }
 

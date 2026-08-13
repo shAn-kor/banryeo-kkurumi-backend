@@ -1,0 +1,50 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: banryeo_performance
+      MYSQL_USER: performance
+      MYSQL_PASSWORD: performance
+      MYSQL_ROOT_PASSWORD: performance-root
+    command: ["--ngram-token-size=2"]
+    ports: ["13306:3306"]
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uperformance -pperformance"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  redis:
+    image: redis:7.4-alpine
+    ports: ["16379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  application:
+    build:
+      context: ..
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/banryeo_performance?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul
+      DB_USERNAME: performance
+      DB_PASSWORD: performance
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JAVA_TOOL_OPTIONS: -Xms512m -Xmx512m
+      SESSION_COOKIE_SECURE: "false"
+    ports: ["18080:8080"]
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1G
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
