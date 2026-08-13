@@ -25,10 +25,15 @@ public class PromotionApplicationService {
     @Transactional public UUID issue(UUID campaignId, String memberLoginId) { return repository.issue(campaignId, memberLoginId, Instant.now(clock)); }
     @Transactional(readOnly = true) public List<CouponView> findMine(String memberLoginId) { return repository.memberCoupons(memberLoginId).stream().map(c -> new CouponView(c.id(), c.campaignId(), c.status(), c.issuedAt())).toList(); }
     @Transactional public long reserve(UUID couponId, String memberLoginId, UUID orderId, long amount) { return couponId == null ? 0 : repository.reserve(couponId, memberLoginId, orderId, amount); }
+    @Transactional public CouponReservationResult tryReserve(UUID couponId, String memberLoginId, UUID orderId, long amount) {
+        try { return new CouponReservationResult(true, couponId == null ? 0 : repository.reserve(couponId, memberLoginId, orderId, amount), null); }
+        catch (RuntimeException exception) { return new CouponReservationResult(false, 0, exception.getMessage()); }
+    }
     @Transactional public void use(UUID orderId) { repository.use(orderId); }
     @Transactional public void release(UUID orderId) { repository.release(orderId); }
 
     public record CreateCampaignCommand(String name, String type, int value, long maximumDiscount, long minimumOrderAmount,
                                         String scopeType, UUID scopeId, int totalQuantity, Instant startsAt, Instant endsAt) {}
     public record CouponView(UUID id, UUID campaignId, String status, Instant issuedAt) {}
+    public record CouponReservationResult(boolean accepted, long discountAmount, String reason) {}
 }

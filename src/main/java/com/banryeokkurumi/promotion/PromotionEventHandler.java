@@ -14,12 +14,10 @@ class PromotionEventHandler {
     PromotionEventHandler(PromotionApplicationService service, ApplicationEventPublisher events, Clock clock, PromotionEventProcessingRegistry processed) { this.service=service; this.events=events; this.clock=clock; this.processed=processed; }
     @ApplicationModuleListener void on(CommerceEvents.CouponReservationRequested event) {
         if (!processed.claim(event.eventId())) return;
-        try {
-            long discount=service.reserve(event.issuedCouponId(),event.memberLoginId(),event.orderId(),event.orderAmount());
-            events.publishEvent(new CommerceEvents.CouponReserved(UUID.randomUUID(),Instant.now(clock),1,event.orderId(),discount));
-        } catch (RuntimeException exception) {
-            events.publishEvent(new CommerceEvents.CouponRejected(UUID.randomUUID(),Instant.now(clock),1,event.orderId(),exception.getMessage()));
-        }
+        PromotionApplicationService.CouponReservationResult result = service.tryReserve(
+                event.issuedCouponId(),event.memberLoginId(),event.orderId(),event.orderAmount());
+        if (result.accepted()) events.publishEvent(new CommerceEvents.CouponReserved(UUID.randomUUID(),Instant.now(clock),1,event.orderId(),result.discountAmount()));
+        else events.publishEvent(new CommerceEvents.CouponRejected(UUID.randomUUID(),Instant.now(clock),1,event.orderId(),result.reason()));
     }
     @ApplicationModuleListener void on(CommerceEvents.PaymentSucceeded event) { if (processed.claim(event.eventId())) service.use(event.orderId()); }
     @ApplicationModuleListener void on(CommerceEvents.PaymentFailed event) { if (processed.claim(event.eventId())) service.release(event.orderId()); }

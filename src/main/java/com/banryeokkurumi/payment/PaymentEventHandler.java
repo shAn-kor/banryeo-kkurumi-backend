@@ -31,15 +31,15 @@ class PaymentEventHandler {
         service.due().forEach(payment->{
             if(payment.reconciliationDeadline()!=null && !now().isBefore(payment.reconciliationDeadline())){
                 provider.cancel(payment.orderId(),payment.scenario());service.fail(payment.orderId(),"RECONCILIATION_TIMEOUT");
-                events.publishEvent(new CommerceEvents.PaymentFailed(UUID.randomUUID(),now(),1,payment.orderId(),"RECONCILIATION_TIMEOUT"));return;
+                return;
             }
             try{resolve(payment.orderId(),provider.query(payment.orderId(),payment.scenario()));}
             catch(RuntimeException exception){service.reschedule(payment.orderId());}
         });
     }
     void resolve(UUID orderId,DemoPaymentProvider.Result result){
-        if(result.status()==DemoPaymentProvider.Status.SUCCEEDED){PaymentApplicationService.PaymentView p=service.success(orderId,result.transactionId());publishSuccess(p);}
-        else if(result.status()==DemoPaymentProvider.Status.DECLINED){service.fail(orderId,result.reason());events.publishEvent(new CommerceEvents.PaymentFailed(UUID.randomUUID(),now(),1,orderId,result.reason()));}
+        if(result.status()==DemoPaymentProvider.Status.SUCCEEDED){service.success(orderId,result.transactionId());}
+        else if(result.status()==DemoPaymentProvider.Status.DECLINED){service.fail(orderId,result.reason());}
     }
     void publishSuccess(PaymentApplicationService.PaymentView p){events.publishEvent(new CommerceEvents.PaymentSucceeded(UUID.randomUUID(),now(),1,p.orderId(),p.providerTransactionId()));}
     String rootMessage(Throwable error){Throwable root=error;while(root.getCause()!=null)root=root.getCause();return root.getMessage()==null?root.getClass().getSimpleName():root.getMessage();}

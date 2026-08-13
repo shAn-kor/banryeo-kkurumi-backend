@@ -28,7 +28,7 @@ public class InventoryApplicationService {
         return find(skuId);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = InsufficientStockException.class)
     public void reserve(UUID orderId, List<CommerceEvents.OrderLine> lines) {
         Instant expiresAt = Instant.now(clock).plus(Duration.ofMinutes(15));
         for (CommerceEvents.OrderLine line : lines) {
