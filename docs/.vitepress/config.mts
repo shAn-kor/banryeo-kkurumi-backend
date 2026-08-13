@@ -7,6 +7,7 @@ export default defineConfig({
   base: '/banryeo-kkurumi-backend/',
   themeConfig: {
     nav: [
+      { text: '문제 해결', link: '/case-study' },
       { text: '모듈', link: '/modules' },
       { text: '주문 흐름', link: '/order-convergence' },
       { text: 'API', link: '/api' },
@@ -14,6 +15,7 @@ export default defineConfig({
     ],
     sidebar: [
       { text: '소개', link: '/' },
+      { text: '문제 해결 사례', link: '/case-study' },
       { text: '모듈 지도', link: '/modules' },
       { text: '주문 상태수렴', link: '/order-convergence' },
       { text: 'API 표면', link: '/api' },

@@ -145,6 +145,7 @@ class OrderConvergenceIntegrationTest {
             assertThat(orderStatus(fixture.orderId())).isEqualTo("CANCELLED");
             assertStock(fixture.skuId(), 5, 0, 0);
             assertThat(couponStatus(couponId)).isEqualTo("AVAILABLE");
+            assertThat(paymentStatus(fixture.orderId())).isEqualTo("CANCELLED");
             assertThat(count("shipping_shipment", fixture.orderId())).isEqualTo(1);
             assertThat(processedListenerCount(eventId)).isEqualTo(3);
         });
