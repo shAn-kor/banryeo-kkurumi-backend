@@ -10,9 +10,10 @@ import java.util.UUID;
 
 @Component
 class PromotionEventHandler {
-    private final PromotionApplicationService service; private final ApplicationEventPublisher events; private final Clock clock;
-    PromotionEventHandler(PromotionApplicationService service, ApplicationEventPublisher events, Clock clock) { this.service=service; this.events=events; this.clock=clock; }
+    private final PromotionApplicationService service; private final ApplicationEventPublisher events; private final Clock clock; private final PromotionEventProcessingRegistry processed;
+    PromotionEventHandler(PromotionApplicationService service, ApplicationEventPublisher events, Clock clock, PromotionEventProcessingRegistry processed) { this.service=service; this.events=events; this.clock=clock; this.processed=processed; }
     @ApplicationModuleListener void on(CommerceEvents.CouponReservationRequested event) {
+        if (!processed.claim(event.eventId())) return;
         try {
             long discount=service.reserve(event.issuedCouponId(),event.memberLoginId(),event.orderId(),event.orderAmount());
             events.publishEvent(new CommerceEvents.CouponReserved(UUID.randomUUID(),Instant.now(clock),1,event.orderId(),discount));
@@ -20,7 +21,7 @@ class PromotionEventHandler {
             events.publishEvent(new CommerceEvents.CouponRejected(UUID.randomUUID(),Instant.now(clock),1,event.orderId(),exception.getMessage()));
         }
     }
-    @ApplicationModuleListener void on(CommerceEvents.PaymentSucceeded event) { service.use(event.orderId()); }
-    @ApplicationModuleListener void on(CommerceEvents.PaymentFailed event) { service.release(event.orderId()); }
-    @ApplicationModuleListener void on(CommerceEvents.OrderCancelled event) { service.release(event.orderId()); }
+    @ApplicationModuleListener void on(CommerceEvents.PaymentSucceeded event) { if (processed.claim(event.eventId())) service.use(event.orderId()); }
+    @ApplicationModuleListener void on(CommerceEvents.PaymentFailed event) { if (processed.claim(event.eventId())) service.release(event.orderId()); }
+    @ApplicationModuleListener void on(CommerceEvents.OrderCancelled event) { if (processed.claim(event.eventId())) service.release(event.orderId()); }
 }

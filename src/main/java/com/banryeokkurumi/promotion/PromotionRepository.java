@@ -51,7 +51,7 @@ class PromotionRepository {
     }
 
     void use(UUID orderId) { jdbc.sql("UPDATE promotion_issued_coupon SET status='USED' WHERE reserved_order_id=:orderId AND status='RESERVED'").param("orderId", orderId.toString()).update(); }
-    void release(UUID orderId) { jdbc.sql("UPDATE promotion_issued_coupon SET status='AVAILABLE', reserved_order_id=NULL WHERE reserved_order_id=:orderId AND status='RESERVED'").param("orderId", orderId.toString()).update(); }
+    void release(UUID orderId) { jdbc.sql("UPDATE promotion_issued_coupon SET status='AVAILABLE', reserved_order_id=NULL WHERE reserved_order_id=:orderId AND status IN ('RESERVED','USED')").param("orderId", orderId.toString()).update(); }
 
     List<CouponView> memberCoupons(String memberLoginId) {
         return jdbc.sql("SELECT id,campaign_id,status,issued_at FROM promotion_issued_coupon WHERE member_login_id=:member ORDER BY issued_at DESC")

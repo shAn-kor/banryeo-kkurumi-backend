@@ -59,6 +59,18 @@ class InventoryRepository {
         });
     }
 
+    void cancel(UUID orderId) {
+        release(orderId);
+        reservations(orderId, "COMMITTED").forEach(reservation -> {
+            int changed = jdbc.sql("UPDATE inventory_reservation SET status='CANCELLED' WHERE order_id=:orderId AND sku_id=:skuId AND status='COMMITTED'")
+                    .param("orderId", orderId.toString()).param("skuId", reservation.skuId().toString()).update();
+            if (changed == 1) {
+                jdbc.sql("UPDATE inventory_stock SET available_quantity=available_quantity+:quantity, sold_quantity=sold_quantity-:quantity WHERE sku_id=:skuId AND sold_quantity>=:quantity")
+                        .param("quantity", reservation.quantity()).param("skuId", reservation.skuId().toString()).update();
+            }
+        });
+    }
+
     Optional<StockView> find(UUID skuId) {
         return jdbc.sql("SELECT sku_id, available_quantity, reserved_quantity, sold_quantity FROM inventory_stock WHERE sku_id=:skuId")
                 .param("skuId", skuId.toString()).query((rs, row) -> new StockView(UUID.fromString(rs.getString(1)), rs.getInt(2), rs.getInt(3), rs.getInt(4))).optional();

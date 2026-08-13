@@ -45,6 +45,9 @@ public class InventoryApplicationService {
     @Transactional
     public void release(UUID orderId) { repository.release(orderId); }
 
+    @Transactional
+    public void cancel(UUID orderId) { repository.cancel(orderId); }
+
     @Transactional(readOnly = true)
     public InventoryView find(UUID skuId) {
         InventoryRepository.StockView stock = repository.find(skuId).orElseThrow(() -> new IllegalArgumentException("재고를 찾을 수 없습니다."));

@@ -7,6 +7,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShipmentTest {
 
@@ -25,5 +26,13 @@ class ShipmentTest {
 
         assertThat(shipment.autoConfirm(deliveredAt.plus(7, ChronoUnit.DAYS)).status())
                 .isEqualTo(ShipmentStatus.CONFIRMED);
+    }
+
+    @Test
+    void cancel_출고전배송을취소하고_시뮬레이터진행대상에서제외한다() {
+        Shipment cancelled = Shipment.prepare(UUID.randomUUID()).cancel();
+
+        assertThat(cancelled.status()).isEqualTo(ShipmentStatus.CANCELLED);
+        assertThatThrownBy(cancelled::ship).isInstanceOf(IllegalStateException.class);
     }
 }

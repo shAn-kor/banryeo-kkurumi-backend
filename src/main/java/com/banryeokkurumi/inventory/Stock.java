@@ -61,6 +61,14 @@ public record Stock(
                 reservedQuantity - reservation.quantity(), soldQuantity, next);
     }
 
+    public Stock cancelCommitted(UUID orderId, int quantity) {
+        if (quantity <= 0 || quantity > soldQuantity) {
+            throw new IllegalArgumentException("판매 취소 수량이 올바르지 않습니다.");
+        }
+        return new Stock(skuId, availableQuantity + quantity, reservedQuantity,
+                soldQuantity - quantity, reservations);
+    }
+
     public record Reservation(int quantity, Instant reservedAt) {
         public Reservation {
             if (quantity <= 0 || reservedAt == null) {

@@ -14,12 +14,14 @@ class InventoryEventHandler {
     private final InventoryApplicationService service;
     private final ApplicationEventPublisher events;
     private final Clock clock;
-    InventoryEventHandler(InventoryApplicationService service, ApplicationEventPublisher events, Clock clock) {
-        this.service = service; this.events = events; this.clock = clock;
+    private final InventoryEventProcessingRegistry processed;
+    InventoryEventHandler(InventoryApplicationService service, ApplicationEventPublisher events, Clock clock, InventoryEventProcessingRegistry processed) {
+        this.service = service; this.events = events; this.clock = clock; this.processed = processed;
     }
 
     @ApplicationModuleListener
     void on(CommerceEvents.OrderSubmitted event) {
+        if (!processed.claim(event.eventId())) return;
         try {
             service.reserve(event.orderId(), event.lines());
             events.publishEvent(new CommerceEvents.StockReserved(UUID.randomUUID(), Instant.now(clock), 1, event.orderId()));
@@ -29,11 +31,11 @@ class InventoryEventHandler {
     }
 
     @ApplicationModuleListener
-    void on(CommerceEvents.PaymentSucceeded event) { service.commit(event.orderId()); }
+    void on(CommerceEvents.PaymentSucceeded event) { if (processed.claim(event.eventId())) service.commit(event.orderId()); }
 
     @ApplicationModuleListener
-    void on(CommerceEvents.PaymentFailed event) { service.release(event.orderId()); }
+    void on(CommerceEvents.PaymentFailed event) { if (processed.claim(event.eventId())) service.release(event.orderId()); }
 
     @ApplicationModuleListener
-    void on(CommerceEvents.OrderCancelled event) { service.release(event.orderId()); }
+    void on(CommerceEvents.OrderCancelled event) { if (processed.claim(event.eventId())) service.cancel(event.orderId()); }
 }

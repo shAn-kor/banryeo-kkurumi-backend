@@ -36,4 +36,14 @@ public record Shipment(UUID orderId, ShipmentStatus status, Instant deliveredAt,
         }
         return this;
     }
+
+    public Shipment cancel() {
+        if (status == ShipmentStatus.CANCELLED) {
+            return this;
+        }
+        if (status != ShipmentStatus.PREPARING) {
+            throw new IllegalStateException("출고된 배송은 취소할 수 없습니다.");
+        }
+        return new Shipment(orderId, ShipmentStatus.CANCELLED, null, null);
+    }
 }

@@ -30,6 +30,14 @@ class ShippingRepository {
                 .param("next",next).param("now",now).param("id",orderId.toString()).param("expected",expected).update();
         if(updated==0){ShipmentData current=find(orderId).orElseThrow(()->new IllegalArgumentException("배송을 찾을 수 없습니다."));if(!current.status().equals(next))throw new IllegalStateException("배송 상태를 변경할 수 없습니다.");}
     }
+    void cancel(UUID orderId){
+        int updated=jdbc.sql("UPDATE shipping_shipment SET status='CANCELLED' WHERE order_id=:id AND status='PREPARING'")
+                .param("id",orderId.toString()).update();
+        if(updated==0){
+            ShipmentData current=find(orderId).orElse(null);
+            if(current!=null && !current.status().equals("CANCELLED"))throw new IllegalStateException("출고된 배송은 취소할 수 없습니다.");
+        }
+    }
     List<ShipmentData> due(String status,String timeColumn,Instant cutoff){return jdbc.sql("SELECT order_id FROM shipping_shipment WHERE status=:status AND "+timeColumn+"<=:cutoff")
             .param("status",status).param("cutoff",cutoff).query(String.class).list().stream().map(UUID::fromString).map(this::find).flatMap(Optional::stream).toList();}
     Instant instant(java.sql.Timestamp value){return value==null?null:value.toInstant();}

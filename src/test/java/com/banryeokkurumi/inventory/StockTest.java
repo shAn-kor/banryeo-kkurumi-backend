@@ -27,4 +27,18 @@ class StockTest {
         assertThatThrownBy(() -> stock.reserve(UUID.randomUUID(), 4, Instant.now()))
                 .isInstanceOf(InsufficientStockException.class);
     }
+
+    @Test
+    void cancelCommitted_결제확정재고를_판매에서가용으로되돌린다() {
+        UUID orderId = UUID.randomUUID();
+        Stock committed = Stock.open(UUID.randomUUID(), 5)
+                .reserve(orderId, 2, Instant.parse("2026-08-13T00:00:00Z"))
+                .commit(orderId);
+
+        Stock cancelled = committed.cancelCommitted(orderId, 2);
+
+        assertThat(cancelled.availableQuantity()).isEqualTo(5);
+        assertThat(cancelled.reservedQuantity()).isZero();
+        assertThat(cancelled.soldQuantity()).isZero();
+    }
 }
