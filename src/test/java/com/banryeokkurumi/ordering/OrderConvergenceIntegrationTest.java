@@ -127,24 +127,24 @@ class OrderConvergenceIntegrationTest {
     }
 
     @Test
-    void 동일결제성공이벤트를_10회전달해도_재고쿠폰배송은한번만반영한다() {
+    void 동일취소이벤트를_10회전달해도_재고쿠폰배송은한번만보상한다() {
         UUID couponId = issueCoupon();
-        Fixture fixture = submit("TIMEOUT", couponId, 5, 2);
-        await(() -> assertThat(paymentStatus(fixture.orderId())).isEqualTo("UNKNOWN"));
-        jdbc.sql("UPDATE payment_transaction SET status='SUCCEEDED' WHERE order_id=:orderId")
-                .param("orderId", fixture.orderId().toString()).update();
+        Fixture fixture = submit("SUCCESS", couponId, 5, 2);
+        await(() -> assertThat(orderStatus(fixture.orderId())).isEqualTo("FULFILLING"));
+        orders.requestCancellation(fixture.orderId(), MEMBER);
+        await(() -> assertThat(orderStatus(fixture.orderId())).isEqualTo("CANCELLED"));
         UUID eventId = UUID.randomUUID();
-        CommerceEvents.PaymentSucceeded duplicated = new CommerceEvents.PaymentSucceeded(
-                eventId, Instant.now(), 1, fixture.orderId(), "duplicate-test-transaction");
+        CommerceEvents.OrderCancelled duplicated = new CommerceEvents.OrderCancelled(
+                eventId, Instant.now(), 1, fixture.orderId());
 
         transactions.executeWithoutResult(status -> {
             for (int delivery = 0; delivery < 10; delivery++) events.publishEvent(duplicated);
         });
 
         await(() -> {
-            assertThat(orderStatus(fixture.orderId())).isEqualTo("FULFILLING");
-            assertStock(fixture.skuId(), 3, 0, 2);
-            assertThat(couponStatus(couponId)).isEqualTo("USED");
+            assertThat(orderStatus(fixture.orderId())).isEqualTo("CANCELLED");
+            assertStock(fixture.skuId(), 5, 0, 0);
+            assertThat(couponStatus(couponId)).isEqualTo("AVAILABLE");
             assertThat(count("shipping_shipment", fixture.orderId())).isEqualTo(1);
             assertThat(processedListenerCount(eventId)).isEqualTo(3);
         });

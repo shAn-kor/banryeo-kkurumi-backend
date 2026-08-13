@@ -9,7 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Component
-class DemoPaymentProviderAdapter implements DemoPaymentProvider {
+public class DemoPaymentProviderAdapter implements DemoPaymentProvider {
     @Override
     @CircuitBreaker(name = "paymentProvider")
     @TimeLimiter(name = "paymentProvider")
