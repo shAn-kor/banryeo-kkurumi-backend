@@ -21,6 +21,7 @@ jobs:
           java-version: '25'
           cache: gradle
       - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew spotlessCheck
       - run: ./gradlew test
       - run: ./scripts/check-api-contract.sh
       - run: ./scripts/check-public-hygiene.sh

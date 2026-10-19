@@ -48,6 +48,7 @@ set -a && source .env && set +a
 ## 검증
 
 ```bash
+./gradlew spotlessCheck   # 포맷 위반 시 ./gradlew spotlessApply
 ./gradlew test
 ./scripts/check-api-contract.sh
 ./scripts/check-public-hygiene.sh

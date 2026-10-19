@@ -1,0 +1,26 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{java,kt,kts}]
+indent_style = space
+
+[*.java]
+indent_size = 2
+
+[*.{kt,kts}]
+indent_size = 4
+ktlint_code_style = ktlint_official
+# Allow descriptive Korean test names such as `authorize_성공_결과를반환한다`.
+ktlint_function_naming_ignore_when_annotated_with = Test
+
+[*.{yml,yaml,json,md}]
+indent_style = space
+indent_size = 2
+
+[*.bat]
+end_of_line = crlf
