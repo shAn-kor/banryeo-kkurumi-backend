@@ -18,20 +18,35 @@ internal class DemoPaymentProviderAdapter : DemoPaymentProvider {
         amount: Long,
         idempotencyKey: String,
         scenario: DemoPaymentProvider.Scenario,
-    ): CompletableFuture<DemoPaymentProvider.Result> = when (scenario) {
-        DemoPaymentProvider.Scenario.SUCCESS -> CompletableFuture.completedFuture(
-            DemoPaymentProvider.Result(DemoPaymentProvider.Status.SUCCEEDED, "demo-$orderId", null),
-        )
-        DemoPaymentProvider.Scenario.DECLINED -> CompletableFuture.completedFuture(
-            DemoPaymentProvider.Result(DemoPaymentProvider.Status.DECLINED, null, "DEMO_DECLINED"),
-        )
-        DemoPaymentProvider.Scenario.TIMEOUT -> CompletableFuture()
-        DemoPaymentProvider.Scenario.CONNECTION_FAILURE -> CompletableFuture.failedFuture(PaymentProviderConnectionException())
-    }
+    ): CompletableFuture<DemoPaymentProvider.Result> =
+        when (scenario) {
+            DemoPaymentProvider.Scenario.SUCCESS -> {
+                CompletableFuture.completedFuture(
+                    DemoPaymentProvider.Result(DemoPaymentProvider.Status.SUCCEEDED, "demo-$orderId", null),
+                )
+            }
+
+            DemoPaymentProvider.Scenario.DECLINED -> {
+                CompletableFuture.completedFuture(
+                    DemoPaymentProvider.Result(DemoPaymentProvider.Status.DECLINED, null, "DEMO_DECLINED"),
+                )
+            }
+
+            DemoPaymentProvider.Scenario.TIMEOUT -> {
+                CompletableFuture()
+            }
+
+            DemoPaymentProvider.Scenario.CONNECTION_FAILURE -> {
+                CompletableFuture.failedFuture(PaymentProviderConnectionException())
+            }
+        }
 
     @CircuitBreaker(name = "paymentProvider")
     @Retry(name = "paymentProvider")
-    override fun query(orderId: UUID, scenario: DemoPaymentProvider.Scenario): DemoPaymentProvider.Result =
+    override fun query(
+        orderId: UUID,
+        scenario: DemoPaymentProvider.Scenario,
+    ): DemoPaymentProvider.Result =
         if (scenario == DemoPaymentProvider.Scenario.DECLINED) {
             DemoPaymentProvider.Result(DemoPaymentProvider.Status.DECLINED, null, "DEMO_DECLINED")
         } else {
@@ -40,8 +55,10 @@ internal class DemoPaymentProviderAdapter : DemoPaymentProvider {
 
     @CircuitBreaker(name = "paymentProvider")
     @Retry(name = "paymentProvider")
-    override fun cancel(orderId: UUID, scenario: DemoPaymentProvider.Scenario) =
-        DemoPaymentProvider.Result(DemoPaymentProvider.Status.CANCELLED, "demo-$orderId", null)
+    override fun cancel(
+        orderId: UUID,
+        scenario: DemoPaymentProvider.Scenario,
+    ) = DemoPaymentProvider.Result(DemoPaymentProvider.Status.CANCELLED, "demo-$orderId", null)
 }
 
 internal class PaymentProviderConnectionException : RuntimeException("데모 결제 provider 연결 실패")

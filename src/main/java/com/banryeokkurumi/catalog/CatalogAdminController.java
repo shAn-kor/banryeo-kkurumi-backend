@@ -12,15 +12,23 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api-admin/v1/catalog")
 class CatalogAdminController {
-    private final CatalogApplicationService service;
-    CatalogAdminController(CatalogApplicationService service) { this.service = service; }
+  private final CatalogApplicationService service;
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    CatalogApplicationService.CatalogView create(@Valid @RequestBody CreateRequest request) {
-        return service.create(new CatalogApplicationService.CreateCatalogCommand(request.name(), request.categoryName(), request.brandName(), request.optionName()));
-    }
+  CatalogAdminController(CatalogApplicationService service) {
+    this.service = service;
+  }
 
-    record CreateRequest(@NotBlank String name, @NotBlank String categoryName, @NotBlank String brandName,
-                         @NotBlank String optionName) {}
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  CatalogApplicationService.CatalogView create(@Valid @RequestBody CreateRequest request) {
+    return service.create(
+        new CatalogApplicationService.CreateCatalogCommand(
+            request.name(), request.categoryName(), request.brandName(), request.optionName()));
+  }
+
+  record CreateRequest(
+      @NotBlank String name,
+      @NotBlank String categoryName,
+      @NotBlank String brandName,
+      @NotBlank String optionName) {}
 }
