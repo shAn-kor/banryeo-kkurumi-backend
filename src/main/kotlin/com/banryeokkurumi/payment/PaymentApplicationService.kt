@@ -21,11 +21,20 @@ class PaymentApplicationService internal constructor(
     @Value("\${app.payment.reconciliation-window:10m}") private val reconciliationWindow: Duration,
 ) {
     @Transactional
-    fun create(orderId: UUID, member: String, amount: Long, scenario: String, key: String): PaymentView =
+    fun create(
+        orderId: UUID,
+        member: String,
+        amount: Long,
+        scenario: String,
+        key: String,
+    ): PaymentView =
         repository.create(orderId, member, amount, DemoPaymentProvider.Scenario.valueOf(scenario), key, Instant.now(clock)).toView()
 
     @Transactional
-    fun success(orderId: UUID, transactionId: String): PaymentView {
+    fun success(
+        orderId: UUID,
+        transactionId: String,
+    ): PaymentView {
         val transition = repository.success(orderId, transactionId, Instant.now(clock))
         if (transition.changed) {
             events.publishEvent(CommerceEvents.PaymentSucceeded(UUID.randomUUID(), Instant.now(clock), 1, orderId, transactionId))
@@ -34,7 +43,10 @@ class PaymentApplicationService internal constructor(
     }
 
     @Transactional
-    fun fail(orderId: UUID, reason: String): PaymentView {
+    fun fail(
+        orderId: UUID,
+        reason: String,
+    ): PaymentView {
         val transition = repository.fail(orderId, reason, Instant.now(clock))
         if (transition.changed) {
             events.publishEvent(CommerceEvents.PaymentFailed(UUID.randomUUID(), Instant.now(clock), 1, orderId, reason))
@@ -43,15 +55,19 @@ class PaymentApplicationService internal constructor(
     }
 
     @Transactional
-    fun unknown(orderId: UUID, reason: String): PaymentView {
+    fun unknown(
+        orderId: UUID,
+        reason: String,
+    ): PaymentView {
         val current = Instant.now(clock)
-        return repository.unknown(
-            orderId,
-            reason,
-            current.plus(reconciliationDelay),
-            current.plus(reconciliationWindow),
-            current,
-        ).toView()
+        return repository
+            .unknown(
+                orderId,
+                reason,
+                current.plus(reconciliationDelay),
+                current.plus(reconciliationWindow),
+                current,
+            ).toView()
     }
 
     @Transactional
@@ -87,15 +103,16 @@ class PaymentApplicationService internal constructor(
     )
 }
 
-private fun PaymentRepository.PaymentData.toView() = PaymentApplicationService.PaymentView(
-    orderId = orderId,
-    memberLoginId = memberLoginId,
-    amount = amount,
-    status = status,
-    scenario = scenario,
-    providerTransactionId = providerTransactionId,
-    failureReason = failureReason,
-    reconciliationDeadline = deadline,
-    nextReconciliationAt = nextAt,
-    updatedAt = updatedAt,
-)
+private fun PaymentRepository.PaymentData.toView() =
+    PaymentApplicationService.PaymentView(
+        orderId = orderId,
+        memberLoginId = memberLoginId,
+        amount = amount,
+        status = status,
+        scenario = scenario,
+        providerTransactionId = providerTransactionId,
+        failureReason = failureReason,
+        reconciliationDeadline = deadline,
+        nextReconciliationAt = nextAt,
+        updatedAt = updatedAt,
+    )

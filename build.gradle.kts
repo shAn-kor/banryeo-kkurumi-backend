@@ -1,9 +1,10 @@
 plugins {
-	kotlin("jvm") version "2.3.21"
-	kotlin("plugin.spring") version "2.3.21"
-	java
-	id("org.springframework.boot") version "4.0.7"
-	id("io.spring.dependency-management") version "1.1.7"
+    kotlin("jvm") version "2.3.21"
+    kotlin("plugin.spring") version "2.3.21"
+    java
+    id("org.springframework.boot") version "4.0.7"
+    id("io.spring.dependency-management") version "1.1.7"
+    id("com.diffplug.spotless") version "8.10.4"
 }
 
 group = "com.banryeokkurumi"
@@ -11,72 +12,94 @@ version = "0.0.1-SNAPSHOT"
 description = "Modular commerce backend"
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 extra["springModulithVersion"] = "2.0.7"
 
 dependencies {
-	implementation("org.jetbrains.kotlin:kotlin-reflect")
-	implementation("tools.jackson.module:jackson-module-kotlin")
-	implementation("org.springframework.boot:spring-boot-starter-actuator")
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-	implementation("org.springframework.boot:spring-boot-starter-data-redis")
-	implementation("org.springframework.boot:spring-boot-starter-flyway")
-	implementation("org.springframework.boot:spring-boot-starter-jdbc")
-	implementation("org.springframework.boot:spring-boot-starter-security")
-	implementation("org.springframework.boot:spring-boot-starter-session-data-redis")
-	implementation("org.springframework.boot:spring-boot-starter-validation")
-	implementation("org.springframework.boot:spring-boot-starter-webmvc")
-	implementation("org.flywaydb:flyway-mysql")
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
-	implementation("org.springframework.modulith:spring-modulith-starter-core")
-	implementation("org.springframework.modulith:spring-modulith-starter-jdbc")
-	implementation("io.github.resilience4j:resilience4j-spring-boot4:2.4.0")
-	implementation("io.github.resilience4j:resilience4j-micrometer:2.4.0")
-	runtimeOnly("com.mysql:mysql-connector-j")
-	runtimeOnly("org.springframework.modulith:spring-modulith-actuator")
-	runtimeOnly("org.springframework.modulith:spring-modulith-observability")
-	runtimeOnly("org.springframework.modulith:spring-modulith-runtime")
-	testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-data-redis-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-flyway-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-jdbc-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-security-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-session-data-redis-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-	testImplementation("org.springframework.boot:spring-boot-testcontainers")
-	testImplementation("org.springframework.modulith:spring-modulith-starter-test")
-	testImplementation("org.awaitility:awaitility")
-	testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
-	testImplementation("org.testcontainers:testcontainers-junit-jupiter")
-	testImplementation("org.testcontainers:testcontainers-mysql")
-	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("tools.jackson.module:jackson-module-kotlin")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.boot:spring-boot-starter-flyway")
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-session-data-redis")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.flywaydb:flyway-mysql")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
+    implementation("org.springframework.modulith:spring-modulith-starter-core")
+    implementation("org.springframework.modulith:spring-modulith-starter-jdbc")
+    implementation("io.github.resilience4j:resilience4j-spring-boot4:2.4.0")
+    implementation("io.github.resilience4j:resilience4j-micrometer:2.4.0")
+    runtimeOnly("com.mysql:mysql-connector-j")
+    runtimeOnly("org.springframework.modulith:spring-modulith-actuator")
+    runtimeOnly("org.springframework.modulith:spring-modulith-observability")
+    runtimeOnly("org.springframework.modulith:spring-modulith-runtime")
+    testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-redis-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-flyway-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-jdbc-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-security-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-session-data-redis-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
+    testImplementation("org.springframework.modulith:spring-modulith-starter-test")
+    testImplementation("org.awaitility:awaitility")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter")
+    testImplementation("org.testcontainers:testcontainers-mysql")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 dependencyManagement {
-	imports {
-		mavenBom("org.springframework.modulith:spring-modulith-bom:${property("springModulithVersion")}")
-	}
+    imports {
+        mavenBom("org.springframework.modulith:spring-modulith-bom:${property("springModulithVersion")}")
+    }
 }
 
 kotlin {
-	compilerOptions {
-		jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25)
-		freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
-	}
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25)
+        freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
+    }
 }
 
 tasks.withType<Test> {
-	useJUnitPlatform()
-	systemProperty("user.timezone", "Asia/Seoul")
+    useJUnitPlatform()
+    systemProperty("user.timezone", "Asia/Seoul")
+}
+
+// Pinned so CI and local editor formatters (google-java-format, ktlint) agree.
+spotless {
+    java {
+        target("src/**/*.java")
+        // Same options as the editor hook: google-java-format --skip-reflowing-long-strings.
+        googleJavaFormat("1.36.1").reflowLongStrings(false)
+    }
+    kotlin {
+        target("src/**/*.kt")
+        ktlint("1.8.0").editorConfigOverride(
+            mapOf(
+                "ktlint_code_style" to "ktlint_official",
+                "ktlint_function_naming_ignore_when_annotated_with" to "Test",
+            ),
+        )
+    }
+    kotlinGradle {
+        target("*.gradle.kts")
+        ktlint("1.8.0").editorConfigOverride(mapOf("ktlint_code_style" to "ktlint_official"))
+    }
 }

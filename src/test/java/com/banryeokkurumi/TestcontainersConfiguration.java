@@ -9,16 +9,15 @@ import org.testcontainers.utility.DockerImageName;
 
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfiguration {
-	@Bean
-	@ServiceConnection
-	MySQLContainer mysqlContainer() {
-		return new MySQLContainer(DockerImageName.parse("mysql:8.4"));
-	}
+  @Bean
+  @ServiceConnection
+  MySQLContainer mysqlContainer() {
+    return new MySQLContainer(DockerImageName.parse("mysql:8.4"));
+  }
 
-	@Bean
-	@ServiceConnection(name = "redis")
-	GenericContainer<?> redisContainer() {
-		return new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine")).withExposedPorts(6379);
-	}
-
+  @Bean
+  @ServiceConnection(name = "redis")
+  GenericContainer<?> redisContainer() {
+    return new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine")).withExposedPorts(6379);
+  }
 }

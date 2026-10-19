@@ -22,13 +22,14 @@ internal class PaymentEventHandler(
     @ApplicationModuleListener
     fun on(event: CommerceEvents.PaymentRequested) {
         if (!processed.claim(event.eventId())) return
-        val payment = service.create(
-            event.orderId(),
-            event.memberLoginId(),
-            event.amount(),
-            event.scenario(),
-            event.idempotencyKey(),
-        )
+        val payment =
+            service.create(
+                event.orderId(),
+                event.memberLoginId(),
+                event.amount(),
+                event.scenario(),
+                event.idempotencyKey(),
+            )
         if (payment.status == "SUCCEEDED") {
             publishSuccess(payment)
             return
@@ -72,7 +73,10 @@ internal class PaymentEventHandler(
         }
     }
 
-    internal fun resolve(orderId: UUID, result: DemoPaymentProvider.Result) {
+    internal fun resolve(
+        orderId: UUID,
+        result: DemoPaymentProvider.Result,
+    ) {
         when (result.status) {
             DemoPaymentProvider.Status.SUCCEEDED -> service.success(orderId, requireNotNull(result.transactionId))
             DemoPaymentProvider.Status.DECLINED -> service.fail(orderId, requireNotNull(result.reason))

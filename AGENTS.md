@@ -24,4 +24,4 @@
 
 ## Completion gates
 
-`./gradlew test`, API allowlist, 공개 위생 검사, VitePress build가 모두 성공해야 한다. 성능 수치는 dataset, 실행 환경, 명령을 함께 남기며 운영 성능으로 표현하지 않는다.
+`./gradlew spotlessCheck`, `./gradlew test`, API allowlist, 공개 위생 검사, VitePress build가 모두 성공해야 한다. 성능 수치는 dataset, 실행 환경, 명령을 함께 남기며 운영 성능으로 표현하지 않는다.

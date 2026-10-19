@@ -10,9 +10,14 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/api/v1/orders/{orderId}/payment")
-internal class PaymentController(private val service: PaymentApplicationService) {
+internal class PaymentController(
+    private val service: PaymentApplicationService,
+) {
     @GetMapping
-    fun get(authentication: Authentication, @PathVariable orderId: UUID): PaymentApplicationService.PaymentView {
+    fun get(
+        authentication: Authentication,
+        @PathVariable orderId: UUID,
+    ): PaymentApplicationService.PaymentView {
         val view = service.find(orderId)
         if (view.memberLoginId != authentication.name) {
             throw SecurityException("다른 회원의 결제입니다.")
