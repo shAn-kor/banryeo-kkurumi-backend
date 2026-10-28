@@ -1,6 +1,7 @@
 import http from 'k6/http';
 import { check } from 'k6';
 import { Counter } from 'k6/metrics';
+import exec from 'k6/execution';
 
 const schemaErrors = new Counter('schema_errors');
 const cursorDuplicates = new Counter('cursor_duplicates');
@@ -19,7 +20,10 @@ export const options = {
     schema_errors: ['count==0'],
     cursor_duplicates: ['count==0'],
     ...Object.fromEntries(
-      requestTypes.map((type) => [`http_req_duration{type:${type}}`, ['max>=0']]),
+      requestTypes.flatMap((type) => [
+        [`http_req_duration{type:${type}}`, ['max>=0']],
+        [`http_reqs{type:${type}}`, ['count>=0']],
+      ]),
     ),
   },
 };
@@ -37,7 +41,9 @@ function request(type, path) {
 }
 
 export default function () {
-  const bucket = (__VU + __ITER) % 100;
+  // Every 100 consecutive iterations across all VUs cover each bucket once, so the
+  // ratio holds even when slow requests keep a VU on few iterations. 37 is coprime to 100.
+  const bucket = (exec.scenario.iterationInTest * 37) % 100;
   if (bucket < 35) {
     request('keyword', `/api/v1/search?keyword=${keyword}&sort=RELEVANCE`);
   } else if (bucket < 60) {
