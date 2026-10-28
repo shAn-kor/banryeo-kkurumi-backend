@@ -1,0 +1,9 @@
+git_commit=eb9e423
+started_at=2026-10-28T13:38:51Z
+docker_engine=29.5.2 vm_cpus=6 vm_memory_bytes=8306655232
+mysql_version=8.4.13 innodb_buffer_pool_size=134217728 transaction_isolation=REPEATABLE-READ innodb_flush_log_at_trx_commit=1 sync_binlog=1 innodb_lock_wait_timeout=50
+redis_version=v=7.4.12
+java=openjdk version "25.0.4.1" 2026-08-18
+application_container=stopped during measurement
+client=benchmark JVM on host macOS, MySQL and Redis in Colima VM
+finished_at=2026-10-28T13:51:55Z
