@@ -1,0 +1,34 @@
+{
+  "strategy" : "redis",
+  "scenario" : "hot",
+  "workers" : 16,
+  "run" : 1,
+  "attempts" : 6000,
+  "successes" : 2000,
+  "insufficient" : 4000,
+  "retryExhausted" : 0,
+  "errors" : 0,
+  "deadlocks" : 0,
+  "lockWaitTimeouts" : 0,
+  "retries" : 0,
+  "compensations" : 0,
+  "wallMs" : 3569.33675,
+  "attemptsPerSec" : 1680.9845694721855,
+  "successesPerSec" : 560.3281898240618,
+  "latency" : {
+    "p50" : 0.804041,
+    "p95" : 32.335333,
+    "p99" : 38.19525,
+    "max" : 44.310292
+  },
+  "invariants" : {
+    "oversell" : 0,
+    "negativeStock" : 0,
+    "sumMismatch" : 0,
+    "rowCountMismatch" : 0,
+    "conservationMismatch" : 0,
+    "lost" : 0,
+    "redisMismatch" : 0
+  },
+  "startedAt" : "2026-10-28T13:39:42.091427Z"
+}

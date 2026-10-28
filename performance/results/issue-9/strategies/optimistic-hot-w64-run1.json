@@ -1,0 +1,34 @@
+{
+  "strategy" : "optimistic",
+  "scenario" : "hot",
+  "workers" : 64,
+  "run" : 1,
+  "attempts" : 6000,
+  "successes" : 1825,
+  "insufficient" : 0,
+  "retryExhausted" : 4175,
+  "errors" : 0,
+  "deadlocks" : 0,
+  "lockWaitTimeouts" : 0,
+  "retries" : 94955,
+  "compensations" : 0,
+  "wallMs" : 73165.880583,
+  "attemptsPerSec" : 82.00543685377433,
+  "successesPerSec" : 24.943320376356358,
+  "latency" : {
+    "p50" : 881.00325,
+    "p95" : 1090.228625,
+    "p99" : 1154.526333,
+    "max" : 1216.922917
+  },
+  "invariants" : {
+    "oversell" : 0,
+    "negativeStock" : 0,
+    "sumMismatch" : 0,
+    "rowCountMismatch" : 0,
+    "conservationMismatch" : 0,
+    "lost" : 4175,
+    "redisMismatch" : 0
+  },
+  "startedAt" : "2026-10-28T13:44:29.843200Z"
+}

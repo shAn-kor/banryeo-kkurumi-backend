@@ -10,4 +10,6 @@ docker compose -f performance/compose.yml up -d --build
 ./performance/summarize-k6.sh
 ```
 
+재고 예약 전략 비교는 MySQL과 Redis만 사용합니다. `RESULT_DIR="$PWD/performance/results/issue-9/strategies" ./performance/run-stock-benchmark.sh`로 실행하고 `./performance/summarize-stock-benchmark.sh`로 요약합니다. 결과 해석은 `docs/inventory-concurrency.md`에 있습니다.
+
 loader는 현재 DB가 정확히 `banryeo_performance`일 때만 `search_document`를 초기화합니다. 전체 k6 실행은 2분 warm-up 뒤 10·50·100 VU를 각 3분씩 3회 실행합니다. 짧은 smoke는 `WARMUP_DURATION=10s DURATION=15s ./performance/run-k6.sh`로 실행할 수 있습니다.

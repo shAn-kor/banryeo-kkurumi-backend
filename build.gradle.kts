@@ -82,6 +82,27 @@ tasks.withType<Test> {
     systemProperty("user.timezone", "Asia/Seoul")
 }
 
+tasks.test {
+    useJUnitPlatform {
+        excludeTags("benchmark")
+    }
+}
+
+tasks.register<Test>("stockReservationBenchmark") {
+    description = "Runs the stock reservation strategy benchmark against external MySQL and Redis."
+    group = "verification"
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    useJUnitPlatform {
+        includeTags("benchmark")
+    }
+    System.getProperties().forEach { key, value ->
+        if (key.toString().startsWith("bench.")) systemProperty(key.toString(), value.toString())
+    }
+    testLogging.showStandardStreams = true
+    outputs.upToDateWhen { false }
+}
+
 // Pinned so CI and local editor formatters (google-java-format, ktlint) agree.
 spotless {
     java {
