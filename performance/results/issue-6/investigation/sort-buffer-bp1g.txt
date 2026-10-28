@@ -1,0 +1,15 @@
+sort_buffer=262144
+-> Limit: 21 row(s)  (cost=0.26 rows=1) (actual time=261..261 rows=21 loops=1)
+-> Limit: 21 row(s)  (cost=0.26 rows=1) (actual time=259..259 rows=21 loops=1)
+-> Limit: 21 row(s)  (cost=0.26 rows=1) (actual time=260..260 rows=21 loops=1)
+Sort_merge_passes	39
+sort_buffer=2097152
+-> Limit: 21 row(s)  (cost=0.26 rows=1) (actual time=258..258 rows=21 loops=1)
+-> Limit: 21 row(s)  (cost=0.26 rows=1) (actual time=270..270 rows=21 loops=1)
+-> Limit: 21 row(s)  (cost=0.26 rows=1) (actual time=255..256 rows=21 loops=1)
+Sort_merge_passes	3
+sort_buffer=8388608
+-> Limit: 21 row(s)  (cost=0.26 rows=1) (actual time=253..253 rows=21 loops=1)
+-> Limit: 21 row(s)  (cost=0.26 rows=1) (actual time=256..256 rows=21 loops=1)
+-> Limit: 21 row(s)  (cost=0.26 rows=1) (actual time=254..254 rows=21 loops=1)
+Sort_merge_passes	3
