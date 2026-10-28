@@ -1,0 +1,7 @@
+git_commit=7651b9c
+started_at=2026-10-28T06:37:11Z
+docker_engine=29.5.2 vm_cpus=6 vm_memory_bytes=8306655232
+innodb_buffer_pool_size=134217728	document_count=300000
+k6_env=VUS_LIST=10 50 REPETITIONS=1 DURATION=1m WARMUP_DURATION=30s
+compose_override=none
+finished_at=2026-10-28T06:39:50Z

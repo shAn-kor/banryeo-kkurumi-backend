@@ -2,9 +2,11 @@
 set -euo pipefail
 
 performance_dir="$(cd "$(dirname "$0")" && pwd)"
-result_dir="$performance_dir/results"
-for vus in 10 50 100; do
-  for repetition in 1 2 3; do
+result_dir="${RESULT_DIR:-$performance_dir/results}"
+vus_list="${VUS_LIST:-10 50 100}"
+repetitions="${REPETITIONS:-3}"
+for vus in $vus_list; do
+  for repetition in $(seq 1 "$repetitions"); do
     result="$result_dir/k6-${vus}vu-run${repetition}.json"
     jq -r --arg vus "$vus" --arg run "$repetition" '[
       $vus, $run,
