@@ -2,6 +2,7 @@ package com.banryeokkurumi.payment
 
 import com.banryeokkurumi.TestcontainersConfiguration
 import com.banryeokkurumi.contracts.CommerceEvents
+import com.banryeokkurumi.payment.internal.PaymentEventHandler
 import io.github.resilience4j.circuitbreaker.CircuitBreaker
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry
 import org.assertj.core.api.Assertions.assertThat
@@ -48,6 +49,7 @@ internal class PaymentModuleIntegrationTest
         private val transactions: TransactionTemplate,
         private val jdbc: JdbcClient,
         private val circuitBreakers: CircuitBreakerRegistry,
+        private val handler: PaymentEventHandler,
     ) {
         @BeforeEach
         fun resetState() {
@@ -138,6 +140,37 @@ internal class PaymentModuleIntegrationTest
         }
 
         @Test
+        fun reconcile_시한전UNKNOWN_PG조회성공으로수렴하고취소하지않는다() {
+            val orderId = timedOut(deadlineFromNow = Duration.ofMinutes(10))
+
+            handler.reconcile()
+
+            assertThat(service.find(orderId).status).isEqualTo("SUCCEEDED")
+            assertThat(recordedEvents.succeeded.map { it.orderId() }).containsExactly(orderId)
+            assertThat(recordedEvents.failed).isEmpty()
+        }
+
+        // The demo PG answers SUCCEEDED for a TIMEOUT payment, so this is a payment the PG approved late.
+        @Test
+        fun reconcile_시한지난UNKNOWN_PG가성공이어도취소요청뒤실패로종결하고_늦은성공은무시한다() {
+            val breaker = circuitBreakers.circuitBreaker("paymentProvider")
+            val orderId = timedOut(deadlineFromNow = Duration.ofSeconds(-1))
+            assertThat(provider.query(orderId, DemoPaymentProvider.Scenario.TIMEOUT).status)
+                .isEqualTo(DemoPaymentProvider.Status.SUCCEEDED)
+            val callsBefore = breaker.metrics.numberOfSuccessfulCalls
+
+            handler.reconcile()
+            val late = service.success(orderId, "demo-$orderId")
+
+            assertThat(breaker.metrics.numberOfSuccessfulCalls - callsBefore).isEqualTo(1)
+            assertThat(late.status).isEqualTo("FAILED")
+            assertThat(late.failureReason).isEqualTo("RECONCILIATION_TIMEOUT")
+            assertThat(late.providerTransactionId).isNull()
+            assertThat(recordedEvents.failed.map { it.orderId() }).containsExactly(orderId)
+            assertThat(recordedEvents.succeeded).isEmpty()
+        }
+
+        @Test
         fun success_중복호출과terminal실패_추가event를발행하지않는다() {
             val orderId = UUID.randomUUID()
             service.create(orderId, "member", 10_000, "SUCCESS", "payment-$orderId")
@@ -181,6 +214,21 @@ internal class PaymentModuleIntegrationTest
                 assertThat(processedCount(eventId)).isEqualTo(1)
                 assertThat(service.find(orderId).status).isEqualTo("SUCCEEDED")
             }
+        }
+
+        private fun timedOut(deadlineFromNow: Duration): UUID {
+            val orderId = UUID.randomUUID()
+            service.create(orderId, "member", 10_000, "TIMEOUT", "payment-$orderId")
+            service.unknown(orderId, "TIMEOUT")
+            jdbc
+                .sql(
+                    "UPDATE payment_transaction SET next_reconciliation_at=:now,reconciliation_deadline=:deadline " +
+                        "WHERE order_id=:orderId",
+                ).param("now", Instant.now())
+                .param("deadline", Instant.now().plus(deadlineFromNow))
+                .param("orderId", orderId.toString())
+                .update()
+            return orderId
         }
 
         private fun paymentCount(orderId: UUID): Int =
