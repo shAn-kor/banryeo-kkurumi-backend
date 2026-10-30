@@ -1,24 +1,15 @@
 package com.banryeokkurumi.shipping;
 
-import com.banryeokkurumi.contracts.CommerceEvents;
-import java.time.Clock;
-import java.time.Instant;
 import java.util.UUID;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 class ShippingController {
   private final ShippingApplicationService service;
-  private final ApplicationEventPublisher events;
-  private final Clock clock;
 
-  ShippingController(
-      ShippingApplicationService service, ApplicationEventPublisher events, Clock clock) {
+  ShippingController(ShippingApplicationService service) {
     this.service = service;
-    this.events = events;
-    this.clock = clock;
   }
 
   @GetMapping("/api/v1/orders/{orderId}/shipping")
@@ -30,26 +21,16 @@ class ShippingController {
 
   @PostMapping("/api/v1/orders/{orderId}/confirmation")
   ShippingApplicationService.ShipmentView confirm(Authentication auth, @PathVariable UUID orderId) {
-    ShippingApplicationService.ShipmentView v = service.confirm(orderId, auth.getName());
-    events.publishEvent(
-        new CommerceEvents.ShipmentConfirmed(UUID.randomUUID(), Instant.now(clock), 1, orderId));
-    return v;
+    return service.confirm(orderId, auth.getName());
   }
 
   @PostMapping("/api-admin/v1/shipments/{orderId}/ship")
   ShippingApplicationService.ShipmentView ship(@PathVariable UUID orderId) {
-    ShippingApplicationService.ShipmentView v = service.ship(orderId);
-    events.publishEvent(
-        new CommerceEvents.ShipmentShipped(UUID.randomUUID(), Instant.now(clock), 1, orderId));
-    return v;
+    return service.ship(orderId);
   }
 
   @PostMapping("/api-admin/v1/shipments/{orderId}/deliver")
   ShippingApplicationService.ShipmentView deliver(@PathVariable UUID orderId) {
-    ShippingApplicationService.ShipmentView v = service.deliver(orderId);
-    events.publishEvent(
-        new CommerceEvents.ShipmentDelivered(
-            UUID.randomUUID(), Instant.now(clock), 1, orderId, Instant.now(clock)));
-    return v;
+    return service.deliver(orderId);
   }
 }
