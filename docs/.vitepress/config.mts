@@ -24,7 +24,10 @@ export default defineConfig({
       { text: '검증 기준', link: '/verification' },
       {
         text: '설계 결정',
-        items: [{ text: 'ADR 0001 영속성 방식', link: '/adr/0001-persistence-style' }]
+        items: [
+          { text: 'ADR 0001 영속성 방식', link: '/adr/0001-persistence-style' },
+          { text: 'ADR 0002 결제 모듈 Kotlin', link: '/adr/0002-kotlin-payment-module' }
+        ]
       }
     ]
   }
