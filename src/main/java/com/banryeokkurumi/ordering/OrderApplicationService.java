@@ -4,6 +4,7 @@ import com.banryeokkurumi.contracts.CommerceEvents;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -143,7 +144,10 @@ public class OrderApplicationService {
 
   @Transactional(readOnly = true)
   public List<OrderView> findMine(String member) {
-    return repository.findByMember(member).stream().map(this::view).toList();
+    List<OrderRepository.OrderData> mine = repository.findByMember(member);
+    Map<UUID, List<CommerceEvents.OrderLine>> lines =
+        repository.linesByOrder(mine.stream().map(OrderRepository.OrderData::id).toList());
+    return mine.stream().map(order -> view(order, lines.get(order.id()))).toList();
   }
 
   @Transactional(readOnly = true)
@@ -159,6 +163,10 @@ public class OrderApplicationService {
   }
 
   OrderView view(OrderRepository.OrderData d) {
+    return view(d, repository.lines(d.id()));
+  }
+
+  private OrderView view(OrderRepository.OrderData d, List<CommerceEvents.OrderLine> lines) {
     return new OrderView(
         d.id(),
         d.memberLoginId(),
@@ -168,7 +176,7 @@ public class OrderApplicationService {
         d.payableAmount(),
         d.issuedCouponId(),
         d.createdAt(),
-        repository.lines(d.id()));
+        lines);
   }
 
   public record CreateOrderCommand(

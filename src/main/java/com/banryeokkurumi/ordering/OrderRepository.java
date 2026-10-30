@@ -1,8 +1,13 @@
 package com.banryeokkurumi.ordering;
 
 import com.banryeokkurumi.contracts.CommerceEvents;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -55,51 +60,70 @@ class OrderRepository {
                 .update());
   }
 
+  private static final String ORDER_COLUMNS =
+      """
+      SELECT id,member_login_id,status,total_amount,discount_amount,payable_amount,issued_coupon_id,payment_scenario,
+             recipient_name,recipient_phone,postal_code,address_line1,address_line2,created_at,updated_at
+        FROM ordering_order
+      """;
+
   Optional<OrderData> find(UUID orderId) {
-    return jdbc.sql(
-            """
-                SELECT id,member_login_id,status,total_amount,discount_amount,payable_amount,issued_coupon_id,payment_scenario,
-                       recipient_name,recipient_phone,postal_code,address_line1,address_line2,created_at,updated_at
-                  FROM ordering_order WHERE id=:id
-                """)
+    return jdbc.sql(ORDER_COLUMNS + " WHERE id=:id")
         .param("id", orderId.toString())
-        .query(
-            (rs, row) ->
-                new OrderData(
-                    UUID.fromString(rs.getString(1)),
-                    rs.getString(2),
-                    OrderStatus.valueOf(rs.getString(3)),
-                    rs.getLong(4),
-                    rs.getLong(5),
-                    rs.getLong(6),
-                    rs.getString(7) == null ? null : UUID.fromString(rs.getString(7)),
-                    rs.getString(8),
-                    new CommerceEvents.EncryptedAddress(
-                        rs.getString(9),
-                        rs.getString(10),
-                        rs.getString(11),
-                        rs.getString(12),
-                        rs.getString(13)),
-                    rs.getTimestamp(14).toInstant(),
-                    rs.getTimestamp(15).toInstant()))
+        .query(OrderRepository::order)
         .optional();
   }
 
+  private static OrderData order(ResultSet rs, int row) throws SQLException {
+    return new OrderData(
+        UUID.fromString(rs.getString(1)),
+        rs.getString(2),
+        OrderStatus.valueOf(rs.getString(3)),
+        rs.getLong(4),
+        rs.getLong(5),
+        rs.getLong(6),
+        rs.getString(7) == null ? null : UUID.fromString(rs.getString(7)),
+        rs.getString(8),
+        new CommerceEvents.EncryptedAddress(
+            rs.getString(9),
+            rs.getString(10),
+            rs.getString(11),
+            rs.getString(12),
+            rs.getString(13)),
+        rs.getTimestamp(14).toInstant(),
+        rs.getTimestamp(15).toInstant());
+  }
+
   List<CommerceEvents.OrderLine> lines(UUID orderId) {
-    return jdbc.sql(
-            "SELECT id,product_id,sku_id,product_name,option_name,unit_price,quantity FROM ordering_order_item WHERE order_id=:orderId ORDER BY id")
+    return jdbc.sql(LINE_COLUMNS + " WHERE order_id=:orderId ORDER BY id")
         .param("orderId", orderId.toString())
-        .query(
-            (rs, row) ->
-                new CommerceEvents.OrderLine(
-                    UUID.fromString(rs.getString(1)),
-                    UUID.fromString(rs.getString(2)),
-                    UUID.fromString(rs.getString(3)),
-                    rs.getString(4),
-                    rs.getString(5),
-                    rs.getLong(6),
-                    rs.getInt(7)))
+        .query(OrderRepository::line)
         .list();
+  }
+
+  /** Loads the lines of several orders in one query, keyed by order id. */
+  Map<UUID, List<CommerceEvents.OrderLine>> linesByOrder(List<UUID> orderIds) {
+    Map<UUID, List<CommerceEvents.OrderLine>> result = new LinkedHashMap<>();
+    if (orderIds.isEmpty()) return result;
+    orderIds.forEach(id -> result.put(id, new ArrayList<>()));
+    jdbc.sql(LINE_COLUMNS + " WHERE order_id IN (:orderIds) ORDER BY order_id, id")
+        .param("orderIds", orderIds.stream().map(UUID::toString).toList())
+        .query(rs -> result.get(UUID.fromString(rs.getString(8))).add(line(rs, 0)));
+    return result;
+  }
+
+  private static final String LINE_COLUMNS =
+      "SELECT id,product_id,sku_id,product_name,option_name,unit_price,quantity,order_id FROM ordering_order_item";
+
+  private static CommerceEvents.OrderLine line(ResultSet rs, int row) throws SQLException {
+    return new CommerceEvents.OrderLine(
+        UUID.fromString(rs.getString(1)),
+        UUID.fromString(rs.getString(2)),
+        UUID.fromString(rs.getString(3)),
+        rs.getString(4),
+        rs.getString(5),
+        rs.getLong(6),
+        rs.getInt(7));
   }
 
   void status(UUID orderId, OrderStatus expected, OrderStatus next, Instant now) {
@@ -134,16 +158,10 @@ class OrderRepository {
   }
 
   List<OrderData> findByMember(String memberLoginId) {
-    return jdbc
-        .sql("SELECT id FROM ordering_order WHERE member_login_id=:member ORDER BY created_at DESC")
+    return jdbc.sql(ORDER_COLUMNS + " WHERE member_login_id=:member ORDER BY created_at DESC")
         .param("member", memberLoginId)
-        .query(String.class)
-        .list()
-        .stream()
-        .map(UUID::fromString)
-        .map(this::find)
-        .flatMap(Optional::stream)
-        .toList();
+        .query(OrderRepository::order)
+        .list();
   }
 
   record OrderData(
