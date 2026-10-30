@@ -53,7 +53,8 @@ class ShippingRepository {
         .optional();
   }
 
-  void transition(UUID orderId, String expected, String next, String column, Instant now) {
+  /** Returns false when the shipment is already in {@code next}, so callers publish only once. */
+  boolean transition(UUID orderId, String expected, String next, String column, Instant now) {
     int updated =
         jdbc.sql(
                 "UPDATE shipping_shipment SET status=:next,"
@@ -68,7 +69,9 @@ class ShippingRepository {
       ShipmentData current =
           find(orderId).orElseThrow(() -> new IllegalArgumentException("배송을 찾을 수 없습니다."));
       if (!current.status().equals(next)) throw new IllegalStateException("배송 상태를 변경할 수 없습니다.");
+      return false;
     }
+    return true;
   }
 
   void cancel(UUID orderId) {

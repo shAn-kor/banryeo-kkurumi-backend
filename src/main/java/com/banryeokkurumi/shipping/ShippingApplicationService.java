@@ -6,33 +6,49 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ShippingApplicationService {
   private final ShippingRepository repository;
+  private final ApplicationEventPublisher events;
   private final Clock clock;
 
-  public ShippingApplicationService(ShippingRepository repository, Clock clock) {
+  public ShippingApplicationService(
+      ShippingRepository repository, ApplicationEventPublisher events, Clock clock) {
     this.repository = repository;
+    this.events = events;
     this.clock = clock;
   }
 
   @Transactional
   public ShipmentView create(UUID orderId, String member, CommerceEvents.EncryptedAddress address) {
-    return view(repository.create(orderId, member, address, Instant.now(clock)));
+    Instant now = Instant.now(clock);
+    ShipmentView shipment = view(repository.create(orderId, member, address, now));
+    events.publishEvent(new CommerceEvents.ShipmentCreated(UUID.randomUUID(), now, 1, orderId));
+    return shipment;
   }
 
+  // Events are published inside the transaction: @ApplicationModuleListener only receives
+  // events published while a transaction is active, and the publication registry commits with it.
   @Transactional
   public ShipmentView ship(UUID orderId) {
-    repository.transition(orderId, "PREPARING", "SHIPPED", "shipped_at", Instant.now(clock));
+    Instant now = Instant.now(clock);
+    if (repository.transition(orderId, "PREPARING", "SHIPPED", "shipped_at", now)) {
+      events.publishEvent(new CommerceEvents.ShipmentShipped(UUID.randomUUID(), now, 1, orderId));
+    }
     return find(orderId);
   }
 
   @Transactional
   public ShipmentView deliver(UUID orderId) {
-    repository.transition(orderId, "SHIPPED", "DELIVERED", "delivered_at", Instant.now(clock));
+    Instant now = Instant.now(clock);
+    if (repository.transition(orderId, "SHIPPED", "DELIVERED", "delivered_at", now)) {
+      events.publishEvent(
+          new CommerceEvents.ShipmentDelivered(UUID.randomUUID(), now, 1, orderId, now));
+    }
     return find(orderId);
   }
 
@@ -40,13 +56,15 @@ public class ShippingApplicationService {
   public ShipmentView confirm(UUID orderId, String member) {
     ShipmentView shipment = find(orderId);
     if (!shipment.memberLoginId().equals(member)) throw new SecurityException("다른 회원의 배송입니다.");
-    repository.transition(orderId, "DELIVERED", "CONFIRMED", "confirmed_at", Instant.now(clock));
-    return find(orderId);
+    return autoConfirm(orderId);
   }
 
   @Transactional
   public ShipmentView autoConfirm(UUID orderId) {
-    repository.transition(orderId, "DELIVERED", "CONFIRMED", "confirmed_at", Instant.now(clock));
+    Instant now = Instant.now(clock);
+    if (repository.transition(orderId, "DELIVERED", "CONFIRMED", "confirmed_at", now)) {
+      events.publishEvent(new CommerceEvents.ShipmentConfirmed(UUID.randomUUID(), now, 1, orderId));
+    }
     return find(orderId);
   }
 
