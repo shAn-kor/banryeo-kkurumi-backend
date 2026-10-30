@@ -16,6 +16,6 @@
 | recommendation | 행동 신호·시간감쇠 Top 100 | 행동 event, Redis 가속/MySQL fallback |
 | contracts | immutable command/event record | 도메인 로직·repository 없음 |
 
-`ApplicationModules.verify()`가 순환 의존과 named interface 밖의 침범을 빌드에서 검사합니다. 쓰기는 JPA를 기본으로 하고, 검색 투영과 재고·쿠폰 원자 갱신에는 명시적 SQL을 사용합니다.
+`ApplicationModules.verify()`가 순환 의존과 named interface 밖의 침범을 빌드에서 검사합니다. 단순 CRUD 모듈(identity, catalog, cart, display)은 JPA를, 조건부 상태 전이·원자 증감·upsert·집계가 필요한 나머지 모듈은 `JdbcClient` 명시적 SQL을 사용합니다. 기준과 비용은 [ADR 0001](/adr/0001-persistence-style)에 있습니다.
 
 `payment`만 Kotlin으로 구현합니다. timeout·거절처럼 nullable한 provider 결과와 비동기 경계를 명시적으로 모델링하되, `contracts`의 Java record와 주문 Process Manager는 그대로 유지해 언어 전환 범위를 결제 모듈 안으로 제한했습니다. repository·listener·adapter는 `payment.internal`에 두며 Kotlin의 `internal` 키워드가 아니라 Spring Modulith package 경계로 접근을 검사합니다.
