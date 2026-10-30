@@ -19,6 +19,7 @@ export default defineConfig({
       { text: '문제 해결 사례', link: '/case-study' },
       { text: '모듈 지도', link: '/modules' },
       { text: '주문 상태수렴', link: '/order-convergence' },
+      { text: '결제 조회 주기와 시한', link: '/payment-timeouts' },
       { text: 'API 표면', link: '/api' },
       { text: '성능 측정', link: '/performance' },
       { text: '검증 기준', link: '/verification' }
