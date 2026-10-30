@@ -21,7 +21,11 @@ export default defineConfig({
       { text: '주문 상태수렴', link: '/order-convergence' },
       { text: 'API 표면', link: '/api' },
       { text: '성능 측정', link: '/performance' },
-      { text: '검증 기준', link: '/verification' }
+      { text: '검증 기준', link: '/verification' },
+      {
+        text: '설계 결정',
+        items: [{ text: 'ADR 0001 영속성 방식', link: '/adr/0001-persistence-style' }]
+      }
     ]
   }
 })
