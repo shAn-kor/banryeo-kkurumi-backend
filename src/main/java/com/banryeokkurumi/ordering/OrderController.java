@@ -50,9 +50,7 @@ class OrderController {
 
   @GetMapping("/{orderId}")
   OrderApplicationService.OrderView detail(Authentication auth, @PathVariable UUID orderId) {
-    OrderApplicationService.OrderView view = orders.find(orderId);
-    if (!view.memberLoginId().equals(auth.getName())) throw new SecurityException("다른 회원의 주문입니다.");
-    return view;
+    return orders.findOwned(orderId, auth.getName());
   }
 
   @PostMapping("/{orderId}/cancellation")

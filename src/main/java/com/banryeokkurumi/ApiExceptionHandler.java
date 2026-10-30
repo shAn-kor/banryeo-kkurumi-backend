@@ -28,8 +28,8 @@ class ApiExceptionHandler {
     return problem(HttpStatus.UNAUTHORIZED, "인증 실패", "아이디 또는 비밀번호가 올바르지 않습니다.");
   }
 
-  @ExceptionHandler({AccessDeniedException.class, SecurityException.class})
-  ProblemDetail forbidden(RuntimeException exception) {
+  @ExceptionHandler(AccessDeniedException.class)
+  ProblemDetail forbidden(AccessDeniedException exception) {
     return problem(HttpStatus.FORBIDDEN, "접근 거부", exception.getMessage());
   }
 
