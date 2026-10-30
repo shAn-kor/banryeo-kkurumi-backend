@@ -14,9 +14,7 @@ class ShippingController {
 
   @GetMapping("/api/v1/orders/{orderId}/shipping")
   ShippingApplicationService.ShipmentView get(Authentication auth, @PathVariable UUID orderId) {
-    ShippingApplicationService.ShipmentView v = service.find(orderId);
-    if (!v.memberLoginId().equals(auth.getName())) throw new SecurityException("다른 회원의 배송입니다.");
-    return v;
+    return service.findOwned(orderId, auth.getName());
   }
 
   @PostMapping("/api/v1/orders/{orderId}/confirmation")

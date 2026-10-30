@@ -4,6 +4,7 @@ import com.banryeokkurumi.contracts.CommerceEvents
 import com.banryeokkurumi.payment.internal.PaymentRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
@@ -81,6 +82,16 @@ class PaymentApplicationService internal constructor(
 
     @Transactional(readOnly = true)
     fun find(orderId: UUID): PaymentView = repository.require(orderId).toView()
+
+    @Transactional(readOnly = true)
+    fun findOwned(
+        orderId: UUID,
+        member: String,
+    ): PaymentView {
+        val payment = find(orderId)
+        if (payment.memberLoginId != member) throw AccessDeniedException("다른 회원의 결제입니다.")
+        return payment
+    }
 
     @Transactional(readOnly = true)
     fun findOptional(orderId: UUID): Optional<PaymentView> = Optional.ofNullable(repository.find(orderId)?.toView())

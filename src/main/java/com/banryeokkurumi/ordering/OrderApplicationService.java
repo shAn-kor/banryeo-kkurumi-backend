@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,8 +92,7 @@ public class OrderApplicationService {
 
   @Transactional
   public OrderView requestCancellation(UUID orderId, String memberLoginId) {
-    OrderRepository.OrderData order = load(orderId);
-    if (!order.memberLoginId().equals(memberLoginId)) throw new SecurityException("다른 회원의 주문입니다.");
+    OrderRepository.OrderData order = loadOwned(orderId, memberLoginId);
     if (order.status() == OrderStatus.SHIPPED
         || order.status() == OrderStatus.DELIVERED
         || order.status() == OrderStatus.CONFIRMED)
@@ -142,6 +142,11 @@ public class OrderApplicationService {
   }
 
   @Transactional(readOnly = true)
+  public OrderView findOwned(UUID orderId, String memberLoginId) {
+    return view(loadOwned(orderId, memberLoginId));
+  }
+
+  @Transactional(readOnly = true)
   public List<OrderView> findMine(String member) {
     return repository.findByMember(member).stream().map(this::view).toList();
   }
@@ -149,6 +154,13 @@ public class OrderApplicationService {
   @Transactional(readOnly = true)
   public List<CommerceEvents.OrderLine> lines(UUID orderId) {
     return repository.lines(orderId);
+  }
+
+  private OrderRepository.OrderData loadOwned(UUID orderId, String memberLoginId) {
+    OrderRepository.OrderData order = load(orderId);
+    if (!order.memberLoginId().equals(memberLoginId))
+      throw new AccessDeniedException("다른 회원의 주문입니다.");
+    return order;
   }
 
   @Transactional(readOnly = true)

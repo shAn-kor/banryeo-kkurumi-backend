@@ -17,11 +17,5 @@ internal class PaymentController(
     fun get(
         authentication: Authentication,
         @PathVariable orderId: UUID,
-    ): PaymentApplicationService.PaymentView {
-        val view = service.find(orderId)
-        if (view.memberLoginId != authentication.name) {
-            throw SecurityException("다른 회원의 결제입니다.")
-        }
-        return view
-    }
+    ): PaymentApplicationService.PaymentView = service.findOwned(orderId, authentication.name)
 }

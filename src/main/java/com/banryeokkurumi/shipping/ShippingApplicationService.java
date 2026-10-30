@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,8 +55,7 @@ public class ShippingApplicationService {
 
   @Transactional
   public ShipmentView confirm(UUID orderId, String member) {
-    ShipmentView shipment = find(orderId);
-    if (!shipment.memberLoginId().equals(member)) throw new SecurityException("다른 회원의 배송입니다.");
+    findOwned(orderId, member);
     return autoConfirm(orderId);
   }
 
@@ -71,6 +71,13 @@ public class ShippingApplicationService {
   @Transactional
   public void cancel(UUID orderId) {
     repository.cancel(orderId);
+  }
+
+  @Transactional(readOnly = true)
+  public ShipmentView findOwned(UUID orderId, String member) {
+    ShipmentView shipment = find(orderId);
+    if (!shipment.memberLoginId().equals(member)) throw new AccessDeniedException("다른 회원의 배송입니다.");
+    return shipment;
   }
 
   @Transactional(readOnly = true)

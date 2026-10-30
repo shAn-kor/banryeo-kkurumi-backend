@@ -30,6 +30,26 @@ class ArchitectureTest {
                       com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameEndingWith(
                           "Repository")));
 
+  // java.lang.SecurityException belongs to the JVM security manager, not to web authorization.
+  @ArchTest
+  static final ArchRule noJvmSecurityExceptionForAuthorization =
+      noClasses()
+          .that()
+          .resideInAPackage("com.banryeokkurumi..")
+          .should()
+          .dependOnClassesThat()
+          .haveFullyQualifiedName("java.lang.SecurityException");
+
+  // Ownership is checked in Application Services so every caller gets the same rule.
+  @ArchTest
+  static final ArchRule controllersDoNotCheckOwnership =
+      noClasses()
+          .that()
+          .haveSimpleNameEndingWith("Controller")
+          .should()
+          .dependOnClassesThat()
+          .haveFullyQualifiedName("org.springframework.security.access.AccessDeniedException");
+
   @ArchTest
   static final ArchRule domainDoesNotDependOnFrameworks =
       noClasses()
