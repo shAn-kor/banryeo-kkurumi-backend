@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -108,7 +109,9 @@ class OrderRepository {
     orderIds.forEach(id -> result.put(id, new ArrayList<>()));
     jdbc.sql(LINE_COLUMNS + " WHERE order_id IN (:orderIds) ORDER BY order_id, id")
         .param("orderIds", orderIds.stream().map(UUID::toString).toList())
-        .query(rs -> result.get(UUID.fromString(rs.getString(8))).add(line(rs, 0)));
+        .query(
+            (RowCallbackHandler)
+                rs -> result.get(UUID.fromString(rs.getString(8))).add(line(rs, 0)));
     return result;
   }
 
