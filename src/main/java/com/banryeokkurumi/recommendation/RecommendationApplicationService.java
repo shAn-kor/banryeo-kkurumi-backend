@@ -29,6 +29,13 @@ public class RecommendationApplicationService {
   }
 
   @Transactional
+  public void observeClient(UUID sku, String category, String type, Instant at) {
+    if (InteractionType.valueOf(type) == InteractionType.PURCHASE)
+      throw new IllegalArgumentException("구매 행동은 서버의 구매 확정으로만 집계합니다.");
+    repository.interaction(sku, category, type, 1, at);
+  }
+
+  @Transactional
   public void observe(UUID sku, String category, String type, double multiplier, Instant at) {
     InteractionType.valueOf(type);
     repository.interaction(sku, category, type, multiplier, at);

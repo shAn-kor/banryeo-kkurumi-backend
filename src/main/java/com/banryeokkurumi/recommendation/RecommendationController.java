@@ -25,7 +25,7 @@ class RecommendationController {
 
   @PostMapping("/interactions")
   void observe(@RequestBody InteractionRequest request) {
-    service.observe(request.skuId(), request.category(), request.type(), 1, Instant.now(clock));
+    service.observeClient(request.skuId(), request.category(), request.type(), Instant.now(clock));
   }
 
   record InteractionRequest(UUID skuId, String category, String type) {}
