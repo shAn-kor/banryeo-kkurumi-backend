@@ -10,6 +10,10 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.awaitility.Awaitility.await
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.clearInvocations
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoMoreInteractions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.ApplicationEventPublisher
@@ -20,6 +24,7 @@ import org.springframework.jdbc.core.simple.JdbcClient
 import org.springframework.modulith.test.ApplicationModuleTest
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.TestPropertySource
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.transaction.support.TransactionTemplate
 import java.time.Clock
 import java.time.Duration
@@ -29,6 +34,7 @@ import java.util.UUID
 @ApplicationModuleTest
 @Import(TestcontainersConfiguration::class, PaymentModuleTestConfiguration::class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@MockitoSpyBean(types = [DemoPaymentProvider::class])
 @TestPropertySource(
     properties = [
         "resilience4j.circuitbreaker.instances.paymentProvider.sliding-window-size=2",
@@ -145,6 +151,8 @@ internal class PaymentModuleIntegrationTest
 
             handler.reconcile()
 
+            verify(provider).query(orderId, DemoPaymentProvider.Scenario.TIMEOUT)
+            verify(provider, never()).cancel(orderId, DemoPaymentProvider.Scenario.TIMEOUT)
             assertThat(service.find(orderId).status).isEqualTo("SUCCEEDED")
             assertThat(recordedEvents.succeeded.map { it.orderId() }).containsExactly(orderId)
             assertThat(recordedEvents.failed).isEmpty()
@@ -158,11 +166,14 @@ internal class PaymentModuleIntegrationTest
             assertThat(provider.query(orderId, DemoPaymentProvider.Scenario.TIMEOUT).status)
                 .isEqualTo(DemoPaymentProvider.Status.SUCCEEDED)
             val callsBefore = breaker.metrics.numberOfSuccessfulCalls
+            clearInvocations(provider)
 
             handler.reconcile()
             val late = service.success(orderId, "demo-$orderId")
 
             assertThat(breaker.metrics.numberOfSuccessfulCalls - callsBefore).isEqualTo(1)
+            verify(provider).cancel(orderId, DemoPaymentProvider.Scenario.TIMEOUT)
+            verifyNoMoreInteractions(provider)
             assertThat(late.status).isEqualTo("FAILED")
             assertThat(late.failureReason).isEqualTo("RECONCILIATION_TIMEOUT")
             assertThat(late.providerTransactionId).isNull()
@@ -217,6 +228,7 @@ internal class PaymentModuleIntegrationTest
         }
 
         private fun timedOut(deadlineFromNow: Duration): UUID {
+            clearInvocations(provider)
             val orderId = UUID.randomUUID()
             service.create(orderId, "member", 10_000, "TIMEOUT", "payment-$orderId")
             service.unknown(orderId, "TIMEOUT")
