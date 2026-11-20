@@ -6,6 +6,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -55,7 +57,7 @@ class StockReservationBenchmark {
     Assumptions.assumeTrue(
         resultDirProperty != null && !resultDirProperty.isBlank(), "bench.resultDir is required");
     Path resultDir = Path.of(resultDirProperty);
-    Files.createDirectories(resultDir);
+    prepareResultDir(resultDir);
 
     List<String> strategies = list("bench.strategies", "conditional,pessimistic,optimistic,redis");
     List<String> scenarios = list("bench.scenarios", "hot,spread");
@@ -64,9 +66,7 @@ class StockReservationBenchmark {
     int runs = Integer.parseInt(System.getProperty("bench.runs", "3"));
 
     Path summary = resultDir.resolve("summary.tsv");
-    if (!Files.exists(summary)) {
-      Files.writeString(summary, BenchResult.tsvHeader() + "\n", StandardOpenOption.CREATE);
-    }
+    Files.writeString(summary, BenchResult.tsvHeader() + "\n", StandardOpenOption.CREATE_NEW);
 
     // Strategies are interleaved inside each run so slow drift of the VM does not favour one.
     for (int workers : workerCounts) {
@@ -86,6 +86,17 @@ class StockReservationBenchmark {
             System.out.println("[bench] " + result.tsvLine());
           }
         }
+      }
+    }
+  }
+
+  // Reruns overwrite same-named JSON files but append to summary.tsv, so one directory per run.
+  static void prepareResultDir(Path resultDir) throws IOException {
+    Files.createDirectories(resultDir);
+    try (Stream<Path> entries = Files.list(resultDir)) {
+      if (entries.findAny().isPresent()) {
+        throw new IllegalStateException(
+            "bench.resultDir must be empty; choose a new directory: " + resultDir);
       }
     }
   }

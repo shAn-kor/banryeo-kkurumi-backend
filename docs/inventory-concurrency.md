@@ -114,8 +114,11 @@ D를 지금 도입하지 않는 이유는 다음과 같습니다.
 
 ```bash
 docker compose -f performance/compose.yml up -d mysql redis
-RESULT_DIR="$PWD/performance/results/issue-9/strategies" ./performance/run-stock-benchmark.sh
-./performance/summarize-stock-benchmark.sh
+result_dir="$PWD/performance/results/stock/$(date +%Y%m%d-%H%M%S)"
+RESULT_DIR="$result_dir" ./performance/run-stock-benchmark.sh
+./performance/summarize-stock-benchmark.sh "$result_dir/summary.tsv"
 ```
+
+벤치마크는 비어 있지 않은 결과 디렉터리를 거절합니다. 같은 디렉터리에 다시 실행하면 run별 JSON은 덮어쓰고 `summary.tsv`에는 행이 덧붙어 두 결과가 섞이기 때문입니다. 실행마다 새 디렉터리를 지정합니다.
 
 `-Dbench.strategies=conditional,redis -Dbench.scenarios=hot -Dbench.workers=16 -Dbench.runs=1`처럼 범위를 좁힐 수 있습니다. 원본 결과는 [`performance/results/issue-9/strategies`](https://github.com/shAn-kor/banryeo-kkurumi-backend/tree/main/performance/results/issue-9/strategies)에 run별 JSON과 `summary.tsv`로 보관합니다.
