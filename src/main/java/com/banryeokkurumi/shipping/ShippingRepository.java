@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -16,24 +17,28 @@ class ShippingRepository {
     this.jdbc = jdbc;
   }
 
-  ShipmentData create(UUID orderId, String member, CommerceEvents.EncryptedAddress a, Instant now) {
-    jdbc.sql(
-            """
+  /** Returns false when a shipment for the order already exists, so callers publish only once. */
+  boolean create(UUID orderId, String member, CommerceEvents.EncryptedAddress a, Instant now) {
+    try {
+      jdbc.sql(
+              """
                 INSERT INTO shipping_shipment(id,order_id,member_login_id,status,recipient_name,recipient_phone,postal_code,address_line1,address_line2,created_at)
                 VALUES (:id,:orderId,:member,'PREPARING',:name,:phone,:postal,:line1,:line2,:now)
-                ON DUPLICATE KEY UPDATE order_id=order_id
                 """)
-        .param("id", UUID.randomUUID().toString())
-        .param("orderId", orderId.toString())
-        .param("member", member)
-        .param("name", a.recipientName())
-        .param("phone", a.recipientPhone())
-        .param("postal", a.postalCode())
-        .param("line1", a.addressLine1())
-        .param("line2", a.addressLine2())
-        .param("now", now)
-        .update();
-    return find(orderId).orElseThrow();
+          .param("id", UUID.randomUUID().toString())
+          .param("orderId", orderId.toString())
+          .param("member", member)
+          .param("name", a.recipientName())
+          .param("phone", a.recipientPhone())
+          .param("postal", a.postalCode())
+          .param("line1", a.addressLine1())
+          .param("line2", a.addressLine2())
+          .param("now", now)
+          .update();
+      return true;
+    } catch (DuplicateKeyException duplicate) {
+      return false;
+    }
   }
 
   Optional<ShipmentData> find(UUID orderId) {
@@ -53,7 +58,8 @@ class ShippingRepository {
         .optional();
   }
 
-  void transition(UUID orderId, String expected, String next, String column, Instant now) {
+  /** Returns false when the shipment is already in {@code next}, so callers publish only once. */
+  boolean transition(UUID orderId, String expected, String next, String column, Instant now) {
     int updated =
         jdbc.sql(
                 "UPDATE shipping_shipment SET status=:next,"
@@ -68,7 +74,9 @@ class ShippingRepository {
       ShipmentData current =
           find(orderId).orElseThrow(() -> new IllegalArgumentException("배송을 찾을 수 없습니다."));
       if (!current.status().equals(next)) throw new IllegalStateException("배송 상태를 변경할 수 없습니다.");
+      return false;
     }
+    return true;
   }
 
   void cancel(UUID orderId) {
