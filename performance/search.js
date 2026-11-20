@@ -1,12 +1,15 @@
 import http from 'k6/http';
 import { check } from 'k6';
 import { Counter } from 'k6/metrics';
+import exec from 'k6/execution';
 
 const schemaErrors = new Counter('schema_errors');
 const cursorDuplicates = new Counter('cursor_duplicates');
 const vus = Number(__ENV.VUS || 10);
 const duration = __ENV.DURATION || '3m';
 const baseUrl = __ENV.BASE_URL || 'http://localhost:18080';
+const keyword = encodeURIComponent(__ENV.KEYWORD || '반려 건강');
+const requestTypes = ['keyword', 'filter', 'popular', 'latest', 'price_cursor'];
 
 export const options = {
   vus,
@@ -16,11 +19,17 @@ export const options = {
     http_req_failed: ['rate==0'],
     schema_errors: ['count==0'],
     cursor_duplicates: ['count==0'],
+    ...Object.fromEntries(
+      requestTypes.flatMap((type) => [
+        [`http_req_duration{type:${type}}`, ['max>=0']],
+        [`http_reqs{type:${type}}`, ['count>=0']],
+      ]),
+    ),
   },
 };
 
-function request(path) {
-  const response = http.get(`${baseUrl}${path}`);
+function request(type, path) {
+  const response = http.get(`${baseUrl}${path}`, { tags: { type } });
   const valid = check(response, {
     'status is 200': (value) => value.status === 200,
     'response has items': (value) => {
@@ -32,21 +41,23 @@ function request(path) {
 }
 
 export default function () {
-  const bucket = (__VU + __ITER) % 100;
+  // Every 100 consecutive iterations across all VUs cover each bucket once, so the
+  // ratio holds even when slow requests keep a VU on few iterations. 37 is coprime to 100.
+  const bucket = (exec.scenario.iterationInTest * 37) % 100;
   if (bucket < 35) {
-    request('/api/v1/search?keyword=%EB%B0%98%EB%A0%A4%20%EA%B1%B4%EA%B0%95&sort=RELEVANCE');
+    request('keyword', `/api/v1/search?keyword=${keyword}&sort=RELEVANCE`);
   } else if (bucket < 60) {
-    request('/api/v1/search?category=%EC%B9%B4%ED%85%8C%EA%B3%A0%EB%A6%AC3&brand=%EB%B8%8C%EB%9E%9C%EB%93%9C3&minimumPrice=10000&maximumPrice=100000&minimumRating=3&inStock=true');
+    request('filter', '/api/v1/search?category=%EC%B9%B4%ED%85%8C%EA%B3%A0%EB%A6%AC3&brand=%EB%B8%8C%EB%9E%9C%EB%93%9C3&minimumPrice=10000&maximumPrice=100000&minimumRating=3&inStock=true');
   } else if (bucket < 75) {
-    request('/api/v1/search?sort=POPULAR');
+    request('popular', '/api/v1/search?sort=POPULAR');
   } else if (bucket < 90) {
-    request('/api/v1/search?sort=LATEST');
+    request('latest', '/api/v1/search?sort=LATEST');
   } else {
-    const first = request('/api/v1/search?sort=PRICE_ASC');
+    const first = request('price_cursor', '/api/v1/search?sort=PRICE_ASC');
     const cursor = first.json('nextCursor');
     if (cursor) {
       const firstIds = new Set(first.json('items').map((item) => item.productId));
-      const second = request(`/api/v1/search?sort=PRICE_ASC&cursor=${encodeURIComponent(cursor)}`);
+      const second = request('price_cursor', `/api/v1/search?sort=PRICE_ASC&cursor=${encodeURIComponent(cursor)}`);
       const duplicated = second.json('items').some((item) => firstIds.has(item.productId));
       if (duplicated) cursorDuplicates.add(1);
     }

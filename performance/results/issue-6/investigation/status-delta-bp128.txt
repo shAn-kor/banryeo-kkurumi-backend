@@ -1,0 +1,18 @@
+variable_name	variable_value
+Created_tmp_disk_tables	0
+Innodb_buffer_pool_pages_free	0
+Innodb_buffer_pool_read_requests	11940485
+Innodb_buffer_pool_reads	340520
+Innodb_data_reads	350481
+Innodb_rows_read	600141
+Sort_merge_passes	78
+COUNT(*)	MAX(product_name)
+21	반려 건강 상품 94910
+variable_name	variable_value
+Created_tmp_disk_tables	0
+Innodb_buffer_pool_pages_free	0
+Innodb_buffer_pool_read_requests	12505942
+Innodb_buffer_pool_reads	363633
+Innodb_data_reads	375250
+Innodb_rows_read	600162
+Sort_merge_passes	91
