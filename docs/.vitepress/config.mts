@@ -21,6 +21,7 @@ export default defineConfig({
       { text: '주문 상태수렴', link: '/order-convergence' },
       { text: 'API 표면', link: '/api' },
       { text: '성능 측정', link: '/performance' },
+      { text: '재고 동시성 비교', link: '/inventory-concurrency' },
       { text: '검증 기준', link: '/verification' }
     ]
   }
