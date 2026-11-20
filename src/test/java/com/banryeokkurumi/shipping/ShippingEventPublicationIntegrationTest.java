@@ -66,6 +66,16 @@ class ShippingEventPublicationIntegrationTest {
   }
 
   @Test
+  void 같은주문의배송생성을다시호출해도_배송생성이벤트는한번만발행된다() {
+    UUID orderId = prepared();
+
+    service.create(orderId, MEMBER, ADDRESS);
+
+    await(() -> assertThat(capture.created()).contains(orderId));
+    assertThat(capture.created()).filteredOn(orderId::equals).hasSize(1);
+  }
+
+  @Test
   void 회원과관리자API의_배송이벤트가_모듈리스너에전달된다() {
     UUID orderId = prepared();
 
@@ -100,11 +110,16 @@ class ShippingEventPublicationIntegrationTest {
   }
 
   static class Capture {
+    private final Queue<UUID> created = new ConcurrentLinkedQueue<>();
     private final Queue<UUID> shipped = new ConcurrentLinkedQueue<>();
     private final Queue<UUID> delivered = new ConcurrentLinkedQueue<>();
     private final Queue<UUID> confirmed = new ConcurrentLinkedQueue<>();
 
     // The listener annotations proxy this bean, so tests read through methods, not fields.
+    Queue<UUID> created() {
+      return created;
+    }
+
     Queue<UUID> shipped() {
       return shipped;
     }
@@ -115,6 +130,11 @@ class ShippingEventPublicationIntegrationTest {
 
     Queue<UUID> confirmed() {
       return confirmed;
+    }
+
+    @ApplicationModuleListener
+    void on(CommerceEvents.ShipmentCreated event) {
+      created.add(event.orderId());
     }
 
     @ApplicationModuleListener

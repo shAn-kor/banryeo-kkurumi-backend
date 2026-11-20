@@ -26,9 +26,10 @@ public class ShippingApplicationService {
   @Transactional
   public ShipmentView create(UUID orderId, String member, CommerceEvents.EncryptedAddress address) {
     Instant now = Instant.now(clock);
-    ShipmentView shipment = view(repository.create(orderId, member, address, now));
-    events.publishEvent(new CommerceEvents.ShipmentCreated(UUID.randomUUID(), now, 1, orderId));
-    return shipment;
+    if (repository.create(orderId, member, address, now)) {
+      events.publishEvent(new CommerceEvents.ShipmentCreated(UUID.randomUUID(), now, 1, orderId));
+    }
+    return find(orderId);
   }
 
   // Events are published inside the transaction: @ApplicationModuleListener only receives
